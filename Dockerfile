@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- Build stage ----
-FROM eclipse-temurin:21.0.13_9-jdk AS build
+FROM eclipse-temurin:24.0.2_12-jdk AS build
 WORKDIR /workspace
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
@@ -12,7 +12,7 @@ RUN ./mvnw -B -q package -DskipTests \
     && java -Djarmode=tools -jar target/app.jar extract --layers --destination target/extracted
 
 # ---- Runtime stage ----
-FROM eclipse-temurin:21.0.13_9-jre
+FROM eclipse-temurin:24.0.2_12-jre
 RUN groupadd --system app && useradd --system --gid app --no-create-home app
 WORKDIR /app
 COPY --from=build --chown=app:app /workspace/target/extracted/dependencies/ ./
