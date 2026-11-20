@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: selfhost-crm
+  profiles:
+    default: dev
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:selfhostcrm}
+    username: ${DB_USER:selfhostcrm}
+    password: ${DB_PASSWORD:selfhostcrm}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: ${SESSION_COOKIE_SECURE:false}
+
+management:
+  endpoints:
+    access:
+      default: none
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+
+app:
+  security:
+    jwt:
+      # HS256 signing secret. Required (>= 32 bytes) in the prod profile.
+      secret: ${JWT_SECRET:}
+      access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:15m}
+      refresh-token-ttl: ${JWT_REFRESH_TOKEN_TTL:7d}
+    refresh-token-cleanup:
+      enabled: ${REFRESH_TOKEN_CLEANUP_ENABLED:false}
+      interval: ${REFRESH_TOKEN_CLEANUP_INTERVAL:1h}
+    lockout:
+      max-attempts: ${LOGIN_MAX_ATTEMPTS:5}
+      duration: ${LOGIN_LOCKOUT_DURATION:15m}

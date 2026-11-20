@@ -1,0 +1,29 @@
+# Production: no default DB password and no default JWT secret.
+# DB_PASSWORD and JWT_SECRET (at least 32 bytes) must be provided via environment;
+# the application refuses to start without a valid JWT_SECRET.
+spring:
+  datasource:
+    password: ${DB_PASSWORD}
+  thymeleaf:
+    cache: true
+
+server:
+  error:
+    include-message: never
+    include-stacktrace: never
+
+logging:
+  level:
+    root: INFO
+
+app:
+  security:
+    refresh-token-cleanup:
+      enabled: ${REFRESH_TOKEN_CLEANUP_ENABLED:true}
+
+# API docs are for development: disabled in production.
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

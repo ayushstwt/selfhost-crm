@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Set up Selfhost CRM</title>
+	<link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<main class="card">
+	<h1>Welcome to Selfhost CRM</h1>
+	<p>Create the first administrator account.</p>
+	<form th:action="@{/setup}" method="post" novalidate>
+		<label for="displayName">Display name</label>
+		<input id="displayName" name="displayName" type="text" autocomplete="name" th:value="${displayName}" required>
+		<p class="error" th:if="${errors['displayName']}" th:text="${errors['displayName']}"></p>
+
+		<label for="email">Email</label>
+		<input id="email" name="email" type="email" autocomplete="username" th:value="${email}" required>
+		<p class="error" th:if="${errors['email']}" th:text="${errors['email']}"></p>
+
+		<label for="password">Password (12 to 128 characters)</label>
+		<input id="password" name="password" type="password" autocomplete="new-password" required>
+		<p class="error" th:if="${errors['password']}" th:text="${errors['password']}"></p>
+
+		<label for="confirmPassword">Confirm password</label>
+		<input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" required>
+		<p class="error" th:if="${errors['confirmPassword']}" th:text="${errors['confirmPassword']}"></p>
+
+		<button type="submit">Create administrator</button>
+	</form>
+</main>
+</body>
+</html>

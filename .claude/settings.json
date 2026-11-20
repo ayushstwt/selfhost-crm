@@ -1,0 +1,38 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw verify:*)",
+      "Bash(./mvnw test:*)",
+      "Bash(./mvnw clean verify:*)",
+      "Bash(./mvnw package:*)",
+      "Bash(./mvnw compile:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(docker compose config:*)"
+    ],
+    "ask": [
+      "Bash(docker compose up:*)",
+      "Bash(docker compose down:*)",
+      "Bash(rm:*)",
+      "Bash(rmdir:*)",
+      "Bash(del:*)",
+      "Bash(Remove-Item:*)"
+    ],
+    "deny": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.dev)",
+      "Read(./.env.prod)",
+      "Read(./.env.production)"
+    ]
+  }
+}

@@ -1,0 +1,2 @@
+-- Baseline migration. Schema is introduced by later migrations (V2+).
+-- Never edit an applied migration; add a new one instead.
