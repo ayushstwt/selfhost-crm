@@ -4,4 +4,6 @@ logging:
 spring:
   thymeleaf:
     cache: false
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
 # No JWT secret here on purpose: without JWT_SECRET the dev profile generates a random one per run.

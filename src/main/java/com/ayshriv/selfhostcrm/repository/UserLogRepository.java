@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface UserLogRepository extends JpaRepository<UserLog, Long> {
+public interface UserLogRepository extends JpaRepository<UserLog, Long>, UserLogRepositoryCustom {
 
 	@Query(value = """
 			select new com.ayshriv.selfhostcrm.web.UserLogResponse(

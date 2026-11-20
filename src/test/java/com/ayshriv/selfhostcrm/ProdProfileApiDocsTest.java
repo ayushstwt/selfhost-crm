@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 /** Swagger UI and the OpenAPI document must not be reachable under the prod profile, signed in or not. */
 @Import(TestcontainersConfiguration.class)
 @ActiveProfiles("prod")
-@SpringBootTest(properties = { "DB_PASSWORD=test-only-db-password-1234",
+@SpringBootTest(properties = { "DB_PASSWORD=test-only-db-password-1234", "app.base-url=https://crm.example.test",
 		"app.security.jwt.secret=test-only-jwt-secret-0123456789abcdef-test-only" })
 @AutoConfigureMockMvc
 class ProdProfileApiDocsTest {
@@ -53,6 +53,7 @@ class ProdProfileApiDocsTest {
 	@Test
 	void docsAreNotExposedToSignedInUsersEither() throws Exception {
 		jdbc.execute("delete from user_log");
+		jdbc.execute("delete from invitations");
 		jdbc.execute("delete from refresh_tokens");
 		jdbc.execute("delete from users");
 		User u = new User();

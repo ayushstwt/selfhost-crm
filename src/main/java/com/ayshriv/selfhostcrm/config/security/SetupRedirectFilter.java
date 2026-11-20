@@ -26,7 +26,8 @@ public class SetupRedirectFilter extends OncePerRequestFilter {
 		return path.equals("/setup") || path.equals("/api") || path.startsWith("/api/")
 				|| path.startsWith("/actuator/") || path.startsWith("/css/") || path.startsWith("/js/")
 				|| path.startsWith("/images/") || path.startsWith("/webjars/") || path.equals("/favicon.ico")
-				|| path.equals("/error");
+				|| path.equals("/error")
+				|| path.startsWith("/invite/");
 	}
 
 	@Override

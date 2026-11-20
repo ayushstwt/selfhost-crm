@@ -1,5 +1,6 @@
 package com.ayshriv.selfhostcrm.service;
 
+import com.ayshriv.selfhostcrm.domain.AuditTargetType;
 import com.ayshriv.selfhostcrm.domain.User;
 import com.ayshriv.selfhostcrm.domain.UserAction;
 import com.ayshriv.selfhostcrm.domain.UserLog;
@@ -28,6 +29,21 @@ public class UserLogService {
 		entry.setUser(user);
 		entry.setAction(action);
 		entry.setSubAction(subAction);
+		logs.save(entry);
+	}
+
+	/**
+	 * Records a successful administrative action by {@code actorId} on a target. Joins the caller's
+	 * transaction, so the audit row commits or rolls back together with the change it describes.
+	 */
+	@Transactional
+	public void recordAction(Long actorId, UserAction action, AuditTargetType targetType, Long targetId) {
+		UserLog entry = new UserLog();
+		entry.setUser(users.getReferenceById(actorId));
+		entry.setAction(action);
+		entry.setSubAction(UserSubAction.SUCCESS);
+		entry.setTargetType(targetType);
+		entry.setTargetId(targetId);
 		logs.save(entry);
 	}
 

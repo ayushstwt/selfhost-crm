@@ -36,6 +36,8 @@ services:
       SERVER_PORT: ${SERVER_PORT:-8080}
       TZ: UTC
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      APP_BASE_URL: ${APP_BASE_URL:?set APP_BASE_URL in .env (public address, for example https://crm.example.com)}
+      INVITATION_TTL: ${INVITATION_TTL:-7d}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
       LOGIN_MAX_ATTEMPTS: ${LOGIN_MAX_ATTEMPTS:-5}
       LOGIN_LOCKOUT_DURATION: ${LOGIN_LOCKOUT_DURATION:-15m}

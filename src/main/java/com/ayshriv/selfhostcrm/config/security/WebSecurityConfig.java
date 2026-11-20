@@ -69,6 +69,7 @@ public class WebSecurityConfig {
 						.requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
 						.requestMatchers("/actuator/**").denyAll()
 						.requestMatchers("/setup", "/login", "/error").permitAll()
+						.requestMatchers("/invite/*").permitAll()
 						.requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico")
 						.permitAll()
 						.anyRequest().authenticated())

@@ -3,8 +3,10 @@ package com.ayshriv.selfhostcrm.web;
 import static com.ayshriv.selfhostcrm.config.OpenApiConfig.EX_INVALID_CREDENTIALS;
 import static com.ayshriv.selfhostcrm.config.OpenApiConfig.EX_LOGIN;
 import static com.ayshriv.selfhostcrm.config.OpenApiConfig.EX_ME;
+import static com.ayshriv.selfhostcrm.config.OpenApiConfig.EX_PASSWORD_CHANGED;
 import static com.ayshriv.selfhostcrm.config.OpenApiConfig.REF;
 
+import com.ayshriv.selfhostcrm.config.security.UserPrincipal;
 import com.ayshriv.selfhostcrm.service.AuthService;
 import com.ayshriv.selfhostcrm.service.PasswordChangeService;
 import com.ayshriv.selfhostcrm.service.UserService;
@@ -16,7 +18,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -85,23 +86,26 @@ public class AuthController {
 	@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "The signed-in user",
 			content = @Content(examples = @ExampleObject(name = EX_ME, ref = REF + EX_ME)))
 	@GetMapping("/me")
-	public ResponseEntity<ApiResponse<UserResponse>> me(@AuthenticationPrincipal Jwt jwt) {
+	public ResponseEntity<ApiResponse<UserResponse>> me(@AuthenticationPrincipal UserPrincipal principal) {
 		return ResponseEntity.ok(ApiResponse.success("Current user retrieved successfully",
-				userService.getById(userId(jwt))));
+				userService.getById(principal.getId())));
 	}
 
 	@Operation(summary = "Change password",
 			description = "Needs the current password. Revokes all refresh tokens of the user and ends their other "
 					+ "web sessions.")
+	@io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(
+			name = "ChangePasswordRequest",
+			value = "{\"currentPassword\":\"your-current-password\",\"newPassword\":\"a-new-password-12+\"}")))
+	@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Password changed",
+			content = @Content(examples = @ExampleObject(name = EX_PASSWORD_CHANGED, ref = REF + EX_PASSWORD_CHANGED)))
+	@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400",
+			description = "Validation failed, current password incorrect (E012) or new password equals the email (E011)")
 	@PostMapping("/change-password")
-	public ResponseEntity<ApiResponse<Void>> changePassword(@AuthenticationPrincipal Jwt jwt,
+	public ResponseEntity<ApiResponse<Void>> changePassword(@AuthenticationPrincipal UserPrincipal principal,
 			@Valid @RequestBody ChangePasswordRequest request) {
-		passwordChangeService.changePassword(userId(jwt), request.currentPassword(), request.newPassword());
+		passwordChangeService.changePassword(principal.getId(), request.currentPassword(), request.newPassword());
 		return ResponseEntity.ok(ApiResponse.success("Password changed. Sign in again on other devices.", null));
-	}
-
-	private static Long userId(Jwt jwt) {
-		return Long.valueOf(jwt.getSubject());
 	}
 
 }

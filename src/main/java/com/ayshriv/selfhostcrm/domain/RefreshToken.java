@@ -11,7 +11,11 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
-/** Server-side record of an opaque refresh token. Only the SHA-256 hash is stored. */
+/**
+ * Server-side record of an opaque refresh token. Only the SHA-256 hash is stored. Never soft-deleted
+ * (expired rows are hard-deleted by the cleanup job), so there is deliberately no {@code @SQLRestriction}.
+ * The owning user may be soft-deleted: queries that load a token for use must check the user still exists.
+ */
 @Entity
 @Table(name = "refresh_tokens")
 @Getter

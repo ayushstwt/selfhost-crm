@@ -1,5 +1,7 @@
 package com.ayshriv.selfhostcrm.config.security;
 
+import com.ayshriv.selfhostcrm.domain.Permission;
+import com.ayshriv.selfhostcrm.domain.Role;
 import java.util.Set;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +25,7 @@ public class ApiSecurityConfig {
 
 	/** The only public API endpoints (all POST). Their credentials are in the body, not in a bearer header. */
 	private static final Set<String> PUBLIC_PATHS = Set.of("/api/auth/login", "/api/auth/refresh",
-			"/api/auth/logout");
+			"/api/auth/logout", "/api/invitations/accept");
 
 	@Bean
 	@Order(1)
@@ -40,7 +42,21 @@ public class ApiSecurityConfig {
 				.requestCache(cache -> cache.disable())
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(HttpMethod.POST, PUBLIC_PATHS.toArray(String[]::new)).permitAll()
-						.anyRequest().authenticated())
+						// Any signed-in user: their own account.
+						.requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+						.requestMatchers(HttpMethod.POST, "/api/auth/change-password").authenticated()
+						.requestMatchers(HttpMethod.GET, "/api/users/me/activity").authenticated()
+						// Coarse permission per endpoint; the services add @PreAuthorize and the target rules.
+						.requestMatchers(HttpMethod.GET, "/api/users", "/api/users/*").hasAuthority(Permission.USER_VIEW.name())
+						.requestMatchers(HttpMethod.PATCH, "/api/users/*").hasAuthority(Permission.USER_UPDATE.name())
+						.requestMatchers(HttpMethod.PATCH, "/api/users/*/role").hasAuthority(Permission.USER_ROLE_CHANGE.name())
+						.requestMatchers(HttpMethod.DELETE, "/api/users/*").hasAuthority(Permission.USER_DELETE.name())
+						.requestMatchers(HttpMethod.POST, "/api/invitations").hasAuthority(Permission.USER_INVITE.name())
+						.requestMatchers(HttpMethod.GET, "/api/invitations").hasAuthority(Permission.INVITATION_MANAGE.name())
+						.requestMatchers(HttpMethod.DELETE, "/api/invitations/*").hasAuthority(Permission.INVITATION_MANAGE.name())
+						.requestMatchers(HttpMethod.GET, "/api/audit").hasAuthority(Permission.AUDIT_VIEW_ALL.name())
+						// Deny by default: an endpoint without a rule above is reachable by ADMIN only.
+						.anyRequest().hasRole(Role.ADMIN.name()))
 				.exceptionHandling(ex -> ex
 						.authenticationEntryPoint(errorHandler)
 						.accessDeniedHandler(errorHandler))

@@ -19,6 +19,7 @@ Edit `.env` (it is git-ignored; never commit it):
 | `DB_USER` | Required. Any name, for example `selfhostcrm`. |
 | `DB_PASSWORD` | Required, no default. At least 12 characters and not `change-me`, `selfhostcrm`, `postgres` or `password`. The app refuses to start otherwise. `openssl rand -base64 24` |
 | `JWT_SECRET` | Required, at least 32 bytes. `openssl rand -base64 48` |
+| `APP_BASE_URL` | Required. The public address people use to reach the app, for example `https://crm.example.com` (or `http://localhost:8080` for a local test). Invitation links are built from it. Must be an absolute `http`/`https` URL without credentials, query or fragment; a trailing slash is ignored. The app refuses to start in prod without it. Set it to your HTTPS domain once the proxy is in place (step 4), otherwise invitation links point to the wrong address. |
 | `SESSION_COOKIE_SECURE` | `true` once you serve the app over HTTPS (see step 4). |
 
 The other variables have defaults; `.env.example` documents all of them.
@@ -53,7 +54,7 @@ crm.example.com {
 }
 ```
 
-Then set `SESSION_COOKIE_SECURE=true` in `.env` and apply it with `docker compose --profile app up -d`. nginx users must add `proxy_set_header X-Forwarded-Proto $scheme; proxy_set_header X-Forwarded-Host $host; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`.
+Then set `APP_BASE_URL=https://crm.example.com` and `SESSION_COOKIE_SECURE=true` in `.env` and apply it with `docker compose --profile app up -d`. nginx users must add `proxy_set_header X-Forwarded-Proto $scheme; proxy_set_header X-Forwarded-Host $host; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`.
 
 Per-IP rate limiting on `/login` and `/api/auth/*` belongs at the proxy (see [auth.md](auth.md)).
 
@@ -105,10 +106,11 @@ Run after changing the Dockerfile or Compose file, with a throw-away env file ou
 
 ```bash
 T=$(mktemp -d)
-printf 'DB_USER=smoke\nDB_PASSWORD=%s\nJWT_SECRET=%s\nSERVER_PORT=18080\nDB_PORT=15432\n' \
+printf 'DB_USER=smoke\nDB_PASSWORD=%s\nJWT_SECRET=%s\nAPP_BASE_URL=http://localhost:18080\nSERVER_PORT=18080\nDB_PORT=15432\n' \
   "$(openssl rand -hex 16)" "$(openssl rand -base64 48 | tr -d '\n')" > "$T/smoke.env"
 docker compose -p smoketest --env-file "$T/smoke.env" --profile app up -d --build
 # check: /actuator/health UP; /setup creates the admin; /login works; POST /api/auth/login returns tokens;
+# POST /api/invitations returns an acceptUrl that starts with APP_BASE_URL and /invite/ opens;
 # /swagger-ui.html and /v3/api-docs are not served (302 anonymous, 404 signed in);
 # 5432/15432 refuse connections on the LAN address; `docker exec smoketest-app-1 id` is not root;
 # `docker restart smoketest-app-1` comes back healthy with the data intact.

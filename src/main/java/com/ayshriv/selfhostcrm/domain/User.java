@@ -6,6 +6,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
@@ -46,6 +47,15 @@ public class User extends BaseEntity {
 	/** Set on password change; web sessions authenticated before it are invalidated. */
 	@Column(name = "credentials_changed_at")
 	private Instant credentialsChangedAt;
+
+	/**
+	 * Set when role, enabled or deleted state changes. Access tokens issued before it and web sessions
+	 * authenticated before it are rejected. JWT {@code iat} has whole-second precision, so changes store the
+	 * <em>next</em> whole second (see {@code AccessRevocationService}) and new users start at the current
+	 * whole second: no token minted in the same second as a change can survive it.
+	 */
+	@Column(name = "access_changed_at", nullable = false)
+	private Instant accessChangedAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
 
 	public User() {
 	}

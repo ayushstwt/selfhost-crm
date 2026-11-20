@@ -42,6 +42,25 @@ public class OpenApiConfig {
 
 	public static final String EX_INTERNAL = "InternalError";
 
+	public static final String EX_USER = "User";
+
+	public static final String EX_USER_PAGE = "UserPage";
+
+	public static final String EX_ACCESS_DENIED_TARGET = "AccessDeniedOnTarget";
+
+	public static final String EX_LAST_ADMIN = "LastAdmin";
+
+	public static final String EX_AUDIT_PAGE = "AuditPage";
+
+	public static final String EX_PASSWORD_CHANGED = "PasswordChanged";
+
+	public static final String EX_INVITATION_CREATED = "InvitationCreated";
+
+	public static final String EX_INVITATION_PAGE = "InvitationPage";
+
+	public static final String EX_ACCEPTED_USER = "InvitationAccepted";
+
+	public static final String EX_INVALID_INVITATION = "InvalidInvitation";
 
 
 	@Bean
@@ -85,6 +104,57 @@ public class OpenApiConfig {
 						.addExamples(EX_FORBIDDEN, example("""
 								{"status":"error","message":"Access denied","errorCode":"E004","data":null,
 								 "path":"/api/example","timestamp":"2026-11-17T10:15:30Z"}"""))
+						.addExamples(EX_USER, example("""
+								{"status":"success","message":"User retrieved successfully",
+								 "data":{"id":7,"email":"sam@example.com","displayName":"Sam Member","role":"MEMBER",
+								         "enabled":true,"lastLoginAt":null,"createdOn":"2026-11-17T09:00:00Z"},
+								 "timestamp":"2026-11-17T10:15:30Z"}"""))
+						.addExamples(EX_USER_PAGE, example("""
+								{"status":"success","message":"Users retrieved successfully",
+								 "data":[{"id":7,"email":"sam@example.com","displayName":"Sam Member","role":"MEMBER",
+								          "enabled":true,"lastLoginAt":null,"createdOn":"2026-11-17T09:00:00Z"}],
+								 "metadata":{"currentPage":0,"pageSize":20,"totalPages":1,"totalItems":1},
+								 "timestamp":"2026-11-17T10:15:31Z"}"""))
+						.addExamples(EX_ACCESS_DENIED_TARGET, example("""
+								{"status":"error","message":"You are not allowed to perform this action on this user",
+								 "errorCode":"E013","data":null,"path":"/api/users/3",
+								 "timestamp":"2026-11-17T10:15:30Z"}"""))
+						.addExamples(EX_LAST_ADMIN, example("""
+								{"status":"error","message":"The last active administrator cannot be demoted, disabled or deleted",
+								 "errorCode":"E014","data":null,"path":"/api/users/1/role",
+								 "timestamp":"2026-11-17T10:15:30Z"}"""))
+						.addExamples(EX_PASSWORD_CHANGED, example("""
+								{"status":"success","message":"Password changed. Sign in again on other devices.",
+								 "data":null,"timestamp":"2026-11-17T10:15:30Z"}"""))
+						.addExamples(EX_AUDIT_PAGE, example("""
+								{"status":"success","message":"Audit log retrieved successfully",
+								 "data":[{"id":57,"createdOn":"2026-11-17T10:20:00Z","action":"USER_ROLE_CHANGED",
+								          "subAction":"SUCCESS","actorId":1,"actorName":"Root Admin",
+								          "targetType":"USER","targetId":7}],
+								 "metadata":{"currentPage":0,"pageSize":20,"totalPages":1,"totalItems":1},
+								 "timestamp":"2026-11-17T10:20:05Z"}"""))
+						.addExamples(EX_INVITATION_CREATED, example("""
+								{"status":"success","message":"Invitation created. Share the link now: it cannot be shown again.",
+								 "data":{"id":12,"email":"new.hire@example.com","role":"MEMBER",
+								         "expiresAt":"2026-11-24T10:15:30Z",
+								         "acceptUrl":"https://crm.example.com/invite/Zk3...43 chars..."},
+								 "timestamp":"2026-11-17T10:15:30Z"}"""))
+						.addExamples(EX_INVITATION_PAGE, example("""
+								{"status":"success","message":"Invitations retrieved successfully",
+								 "data":[{"id":12,"email":"new.hire@example.com","role":"MEMBER","invitedById":1,
+								          "invitedByName":"Root Admin","expiresAt":"2026-11-24T10:15:30Z",
+								          "createdOn":"2026-11-17T10:15:30Z"}],
+								 "metadata":{"currentPage":0,"pageSize":20,"totalPages":1,"totalItems":1},
+								 "timestamp":"2026-11-17T10:15:31Z"}"""))
+						.addExamples(EX_ACCEPTED_USER, example("""
+								{"status":"success","message":"Account created. You can sign in now.",
+								 "data":{"id":9,"email":"new.hire@example.com","displayName":"New Hire","role":"MEMBER",
+								         "enabled":true,"lastLoginAt":null,"createdOn":"2026-11-17T11:00:00Z"},
+								 "timestamp":"2026-11-17T11:00:00Z"}"""))
+						.addExamples(EX_INVALID_INVITATION, example("""
+								{"status":"error","message":"This invitation link is invalid or has expired",
+								 "errorCode":"E016","data":null,"path":"/api/invitations/accept",
+								 "timestamp":"2026-11-17T11:00:00Z"}"""))
 						.addExamples(EX_INTERNAL, example("""
 								{"status":"error","message":"An unexpected error occurred","errorCode":"E500","data":null,
 								 "path":"/api/example","timestamp":"2026-11-17T10:15:30Z"}""")));

@@ -33,4 +33,5 @@ jobs:
           DB_USER: ci
           DB_PASSWORD: ci-dummy-password-0000
           JWT_SECRET: ci-dummy-jwt-secret-0000000000000000
+          APP_BASE_URL: http://localhost:8080
         run: docker compose --profile app config --quiet
