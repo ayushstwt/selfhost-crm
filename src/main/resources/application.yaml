@@ -2,11 +2,11 @@ spring:
   application:
     name: selfhost-crm
   profiles:
-    default: dev
+    default: prod
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:selfhostcrm}
     username: ${DB_USER:selfhostcrm}
-    password: ${DB_PASSWORD:selfhostcrm}
+    password: ${DB_PASSWORD}
   jpa:
     open-in-view: false
     hibernate:

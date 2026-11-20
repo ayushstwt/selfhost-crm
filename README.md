@@ -13,12 +13,20 @@ One install = one organization (single tenant). Roles: Admin, Manager, Member, p
 ```bash
 git clone https://github.com/ayushstwt/selfhost-crm.git
 cd selfhost-crm
-cp .env.example .env            # then set DB_PASSWORD and JWT_SECRET
+cp .env.example .env            # then set DB_PASSWORD (12+ chars) and JWT_SECRET
 docker compose --profile app up -d --build
 # open http://localhost:8080 (the first visit asks you to create the administrator)
 ```
 
-`docker compose up -d` without `--profile app` starts only PostgreSQL, which is what you want for local development (run the app from your IDE or `./mvnw spring-boot:run`).
+`prod` is the default Spring profile: the app refuses to start without a strong `DB_PASSWORD` (at least 12 characters, not `change-me`, `selfhostcrm`, `postgres` or `password`) and a `JWT_SECRET`. PostgreSQL is published on `127.0.0.1` only. Full guide (reverse proxy, backup, upgrade): [docs/deploy.md](docs/deploy.md).
+
+### Local development
+`docker compose up -d` without `--profile app` starts only PostgreSQL. Run the app with the dev profile, which must be activated explicitly:
+```bash
+export DB_PASSWORD=...          # same value as in .env
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+The dev profile enables Swagger UI and generates a random `JWT_SECRET` per run when unset.
 
 Health check: `http://localhost:8080/actuator/health`
 

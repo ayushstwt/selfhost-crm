@@ -6,10 +6,11 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_NAME:-selfhostcrm}
-      POSTGRES_USER: ${DB_USER:-selfhostcrm}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-selfhostcrm}
+      POSTGRES_USER: ${DB_USER:?DB_USER must be set in .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      # Loopback only: PostgreSQL must never be reachable from the network.
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -30,7 +31,7 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-selfhostcrm}
-      DB_USER: ${DB_USER:-selfhostcrm}
+      DB_USER: ${DB_USER:?DB_USER must be set in .env}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
       SERVER_PORT: ${SERVER_PORT:-8080}
       TZ: UTC
@@ -42,6 +43,12 @@ services:
       JWT_REFRESH_TOKEN_TTL: ${JWT_REFRESH_TOKEN_TTL:-7d}
       REFRESH_TOKEN_CLEANUP_ENABLED: ${REFRESH_TOKEN_CLEANUP_ENABLED:-true}
       REFRESH_TOKEN_CLEANUP_INTERVAL: ${REFRESH_TOKEN_CLEANUP_INTERVAL:-1h}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:$${SERVER_PORT:-8080}/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      start_period: 40s
+      retries: 5
     ports:
       - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
 

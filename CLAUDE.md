@@ -27,7 +27,8 @@ Group by feature inside each layer once features exist (e.g. `web.contact`). Mig
 ## Commands
 - Build + tests: `./mvnw verify` (tests need Docker running)
 - Tests only: `./mvnw test`
-- Run app (needs Postgres): `docker compose up -d db` then `./mvnw spring-boot:run`
+- Run app locally (needs Postgres): `docker compose up -d db`, export `DB_PASSWORD` (same value as in `.env`), then `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev`. **prod is the default profile**; dev must be activated explicitly. Prod refuses weak/missing `DB_PASSWORD` and a missing `JWT_SECRET`.
+- Tests must declare their profile (`@ActiveProfiles("dev")` or `"prod"`); never rely on the default.
 - Full stack in containers: `docker compose --profile app up -d --build`
 - Validate compose: `docker compose config`
 

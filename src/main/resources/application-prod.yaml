@@ -1,6 +1,6 @@
-# Production: no default DB password and no default JWT secret.
-# DB_PASSWORD and JWT_SECRET (at least 32 bytes) must be provided via environment;
-# the application refuses to start without a valid JWT_SECRET.
+# Production (the default profile): no default DB password and no default JWT secret.
+# DB_PASSWORD (at least 12 characters, not a well-known value) and JWT_SECRET (at least 32 bytes)
+# must be provided via environment; the application refuses to start otherwise.
 spring:
   datasource:
     password: ${DB_PASSWORD}
@@ -8,6 +8,8 @@ spring:
     cache: true
 
 server:
+  # Behind a reverse proxy: honour X-Forwarded-Proto/Host/For so redirects and URLs use the public scheme and host.
+  forward-headers-strategy: framework
   error:
     include-message: never
     include-stacktrace: never

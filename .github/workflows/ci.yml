@@ -20,3 +20,17 @@ jobs:
           cache: maven
       - name: Build and test
         run: ./mvnw -B verify
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t selfhost-crm:ci .
+      - name: Validate compose file
+        # Dummy values only; they exist so the required-variable checks (:?) pass.
+        env:
+          DB_USER: ci
+          DB_PASSWORD: ci-dummy-password-0000
+          JWT_SECRET: ci-dummy-jwt-secret-0000000000000000
+        run: docker compose --profile app config --quiet
