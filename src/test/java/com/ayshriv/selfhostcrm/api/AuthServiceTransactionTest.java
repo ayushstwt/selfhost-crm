@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.context.annotation.Import;
 
 /**
@@ -17,6 +18,7 @@ import org.springframework.context.annotation.Import;
  * transactional.
  */
 @Import(TestcontainersConfiguration.class)
+@ActiveProfiles("dev")
 @SpringBootTest
 class AuthServiceTransactionTest {
 

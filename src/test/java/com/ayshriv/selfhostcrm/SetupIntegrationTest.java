@@ -22,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -30,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 @Import(TestcontainersConfiguration.class)
+@ActiveProfiles("dev")
 @SpringBootTest
 @AutoConfigureMockMvc
 class SetupIntegrationTest {
@@ -70,6 +72,13 @@ class SetupIntegrationTest {
 		mvc.perform(get("/login")).andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/setup"));
 		mvc.perform(get("/setup")).andExpect(status().isOk());
 		mvc.perform(get("/actuator/health")).andExpect(status().isOk());
+	}
+
+	@Test
+	void setupPageWiresCsrfIntoHtmxOnBody() throws Exception {
+		mvc.perform(get("/setup")).andExpect(status().isOk())
+				.andExpect(content().string(org.hamcrest.Matchers
+						.containsString("<body hx-headers=\"{&quot;X-CSRF-TOKEN&quot;:&quot;")));
 	}
 
 	@Test

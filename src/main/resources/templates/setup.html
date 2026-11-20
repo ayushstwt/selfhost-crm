@@ -6,7 +6,7 @@
 	<title>Set up Selfhost CRM</title>
 	<link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
-<body>
+<body th:attr="hx-headers=${'{&quot;' + _csrf.headerName + '&quot;:&quot;' + _csrf.token + '&quot;}'}">
 <main class="card">
 	<h1>Welcome to Selfhost CRM</h1>
 	<p>Create the first administrator account.</p>
