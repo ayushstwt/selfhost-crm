@@ -42,6 +42,9 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long> {
 			+ "and i.revokedAt is null and i.expiresAt > :now")
 	boolean existsPendingByTokenHash(@Param("hash") String hash, @Param("now") Instant now);
 
+	@Query(PENDING_PROJECTION + " and i.id = :id")
+	Optional<InvitationResponse> findPendingById(@Param("now") Instant now, @Param("id") Long id);
+
 	@Query(value = PENDING_PROJECTION + " order by i.createdOn desc, i.id desc", countQuery = """
 			select count(i) from Invitation i
 			where i.acceptedAt is null and i.revokedAt is null and i.expiresAt > :now""")

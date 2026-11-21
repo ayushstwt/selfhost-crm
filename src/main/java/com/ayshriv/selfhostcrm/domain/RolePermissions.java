@@ -17,7 +17,7 @@ public final class RolePermissions {
 	static {
 		PERMISSIONS.put(Role.ADMIN, EnumSet.allOf(Permission.class));
 		PERMISSIONS.put(Role.MANAGER, EnumSet.of(Permission.USER_VIEW, Permission.USER_UPDATE,
-				Permission.USER_INVITE, Permission.INVITATION_MANAGE));
+				Permission.USER_INVITE, Permission.INVITATION_MANAGE, Permission.TEAM_MEMBERS_MANAGE));
 		PERMISSIONS.put(Role.MEMBER, EnumSet.noneOf(Permission.class));
 	}
 

@@ -60,6 +60,15 @@ Roles are global: **Admin**, **Manager**, **Member**. There is no self-registrat
 - Invitees open `/invite/{token}` (or call `POST /api/invitations/accept`) to set a name and password.
 - `GET /api/audit` (Admin) is the audit log of all users.
 
+## Teams
+Teams group people inside the one organization (they are not tenants). A user can be in several teams, with a team role of Lead or Member in each. For now teams only group people; they do not limit which records anyone sees.
+
+- `GET /api/teams`, `GET /api/teams/{id}` (Admin: all teams; everyone else: the teams they belong to); `POST`, `PATCH`, `DELETE /api/teams/{id}` (Admin).
+- `GET /api/teams/{id}/members`, `PUT` and `DELETE /api/teams/{id}/members/{userId}` (Admin; a Manager who leads the team, for Member accounts only); `GET /api/users/{id}/teams`.
+
+## Admin web pages
+Sign in and use the navigation: `/admin/users` (Admin, Manager: users, invitations), `/admin/teams` (everyone, filtered by what you may see) and `/admin/audit` (Admin). Server-rendered with HTMX; no extra setup. The invitation link is shown once when you create it. Who may do what: [docs/rbac.md](docs/rbac.md).
+
 Role and permission matrix, who may act on whom, error codes: [docs/rbac.md](docs/rbac.md).
 
 Details, error codes and curl examples: [docs/auth.md](docs/auth.md). API docs (dev profile): `/swagger-ui.html` after signing in.
@@ -70,7 +79,7 @@ All `/api/**` responses use one envelope (`status`, `message`, `errorCode`, `dat
 - [x] Project skeleton, Docker Compose, Flyway, CI
 - [x] Authentication (web session + API JWT), first-run setup, audit log
 - [x] Roles (RBAC), user management and invitations (API)
-- [ ] Teams and the admin web UI
+- [x] Teams and team membership (API), admin web UI (users, invitations, teams, audit log)
 - [ ] Contacts, companies, deals
 - [ ] Activities and notes
 - [x] REST API with JWT (auth endpoints)

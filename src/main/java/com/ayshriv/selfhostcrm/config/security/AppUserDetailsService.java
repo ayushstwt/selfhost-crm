@@ -1,6 +1,7 @@
 package com.ayshriv.selfhostcrm.config.security;
 
 import com.ayshriv.selfhostcrm.repository.UserRepository;
+import com.ayshriv.selfhostcrm.service.UserService;
 import java.util.Locale;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -13,15 +14,18 @@ public class AppUserDetailsService implements UserDetailsService {
 
 	private final UserRepository users;
 
-	public AppUserDetailsService(UserRepository users) {
+	private final UserService userService;
+
+	public AppUserDetailsService(UserRepository users, UserService userService) {
 		this.users = users;
+		this.userService = userService;
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		String email = username == null ? "" : username.trim().toLowerCase(Locale.ROOT);
-		return users.findByEmail(email).map(UserPrincipal::new)
+		return users.findByEmail(email).map(userService::toPrincipal)
 				.orElseThrow(() -> new UsernameNotFoundException("Unknown user"));
 	}
 

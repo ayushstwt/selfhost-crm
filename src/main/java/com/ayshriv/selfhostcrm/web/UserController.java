@@ -2,12 +2,14 @@ package com.ayshriv.selfhostcrm.web;
 
 import static com.ayshriv.selfhostcrm.config.OpenApiConfig.EX_ACCESS_DENIED_TARGET;
 import static com.ayshriv.selfhostcrm.config.OpenApiConfig.EX_LAST_ADMIN;
+import static com.ayshriv.selfhostcrm.config.OpenApiConfig.EX_TEAM_PAGE;
 import static com.ayshriv.selfhostcrm.config.OpenApiConfig.EX_USER;
 import static com.ayshriv.selfhostcrm.config.OpenApiConfig.EX_USER_PAGE;
 import static com.ayshriv.selfhostcrm.config.OpenApiConfig.REF;
 
 import com.ayshriv.selfhostcrm.config.security.UserPrincipal;
 import com.ayshriv.selfhostcrm.domain.Role;
+import com.ayshriv.selfhostcrm.service.TeamService;
 import com.ayshriv.selfhostcrm.service.UserManagementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -39,8 +41,11 @@ public class UserController {
 
 	private final UserManagementService userService;
 
-	public UserController(UserManagementService userService) {
+	private final TeamService teamService;
+
+	public UserController(UserManagementService userService, TeamService teamService) {
 		this.userService = userService;
+		this.teamService = teamService;
 	}
 
 	@Operation(summary = "List users",
@@ -66,6 +71,21 @@ public class UserController {
 	@GetMapping("/{id}")
 	public ResponseEntity<ApiResponse<UserResponse>> get(@PathVariable Long id) {
 		return ResponseEntity.ok(ApiResponse.success("User retrieved successfully", userService.get(id)));
+	}
+
+	@Operation(summary = "List the teams of a user",
+			description = "Admin: any user. Everyone else: only themselves (403 otherwise). size max 100.")
+	@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "A page of teams",
+			content = @Content(examples = @ExampleObject(name = EX_TEAM_PAGE, ref = REF + EX_TEAM_PAGE)))
+	@GetMapping("/{id}/teams")
+	public ResponseEntity<ApiResponse<List<TeamResponse>>> teams(@AuthenticationPrincipal UserPrincipal actor,
+			@PathVariable Long id,
+			@RequestParam(defaultValue = "0") @Min(value = 0, message = "page must be 0 or greater") int page,
+			@RequestParam(defaultValue = "20") @Min(value = 1, message = "size must be at least 1")
+			@Max(value = 100, message = "size must be at most 100") int size) {
+		Page<TeamResponse> result = teamService.teamsOfUser(actor, id, page, size);
+		return ResponseEntity.ok(ApiResponse.success("Teams retrieved successfully", result.getContent(),
+				PageMetadata.from(result)));
 	}
 
 	@Operation(summary = "Update display name or enabled state",

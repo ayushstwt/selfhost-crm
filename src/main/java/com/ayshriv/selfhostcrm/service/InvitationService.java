@@ -115,6 +115,16 @@ public class InvitationService {
 				: invitations.findPendingByInviter(now, actor.getId(), pageable);
 	}
 
+	/** One pending invitation, same visibility as the list: Admin any, Manager only their own. */
+	@PreAuthorize("hasAuthority('INVITATION_MANAGE')")
+	@Transactional(readOnly = true)
+	public InvitationResponse get(UserPrincipal actor, Long id) {
+		InvitationResponse invitation = invitations.findPendingById(Instant.now(), id)
+				.orElseThrow(() -> new ResourceNotFoundException(ErrorMessages.E001));
+		policy.assertCanManageInvitation(actor, invitation.invitedById());
+		return invitation;
+	}
+
 	@PreAuthorize("hasAuthority('INVITATION_MANAGE')")
 	@Transactional
 	public void revoke(UserPrincipal actor, Long id) {

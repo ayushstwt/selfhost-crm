@@ -38,12 +38,20 @@ public class UserLogService {
 	 */
 	@Transactional
 	public void recordAction(Long actorId, UserAction action, AuditTargetType targetType, Long targetId) {
+		recordAction(actorId, action, targetType, targetId, null);
+	}
+
+	/** Same, for team member actions: the target is the team, {@code relatedUserId} the affected user. */
+	@Transactional
+	public void recordAction(Long actorId, UserAction action, AuditTargetType targetType, Long targetId,
+			Long relatedUserId) {
 		UserLog entry = new UserLog();
 		entry.setUser(users.getReferenceById(actorId));
 		entry.setAction(action);
 		entry.setSubAction(UserSubAction.SUCCESS);
 		entry.setTargetType(targetType);
 		entry.setTargetId(targetId);
+		entry.setRelatedUserId(relatedUserId);
 		logs.save(entry);
 	}
 

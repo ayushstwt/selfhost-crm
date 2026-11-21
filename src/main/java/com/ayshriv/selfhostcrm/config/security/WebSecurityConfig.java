@@ -33,7 +33,8 @@ public class WebSecurityConfig {
 	@Order(Ordered.LOWEST_PRECEDENCE)
 	SecurityFilterChain webSecurityFilterChain(HttpSecurity http, SetupService setupService,
 			UserService userService, LoginAttemptService loginAttempts, UserLogService userLog,
-			DaoAuthenticationProvider provider) {
+			DaoAuthenticationProvider provider,
+			org.thymeleaf.spring6.view.ThymeleafViewResolver viewResolver) {
 
 		SavedRequestAwareAuthenticationSuccessHandler success = new SavedRequestAwareAuthenticationSuccessHandler() {
 			@Override
@@ -70,9 +71,17 @@ public class WebSecurityConfig {
 						.requestMatchers("/actuator/**").denyAll()
 						.requestMatchers("/setup", "/login", "/error").permitAll()
 						.requestMatchers("/invite/*").permitAll()
+						// Admin pages. Real checks stay in the services (@PreAuthorize); these are the outer layer. Deny by default.
+						.requestMatchers("/admin/users", "/admin/users/**", "/admin/invitations", "/admin/invitations/**")
+						.hasAuthority(com.ayshriv.selfhostcrm.domain.Permission.USER_VIEW.name())
+						.requestMatchers("/admin/audit", "/admin/audit/**")
+						.hasAuthority(com.ayshriv.selfhostcrm.domain.Permission.AUDIT_VIEW_ALL.name())
+						.requestMatchers("/admin/teams", "/admin/teams/**").authenticated()
+						.requestMatchers("/admin/**").hasRole("ADMIN")
 						.requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico")
 						.permitAll()
 						.anyRequest().authenticated())
+				.exceptionHandling(ex -> ex.accessDeniedHandler(new WebAccessDeniedHandler(viewResolver)))
 				.formLogin(form -> form
 						.loginPage("/login")
 						.loginProcessingUrl("/login")

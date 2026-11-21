@@ -82,6 +82,22 @@ public class UserAccessPolicy {
 		}
 	}
 
+	/** Non-throwing views of the rules above, for showing or hiding row actions (the services still enforce). */
+	public boolean canToggleEnabled(UserPrincipal actor, Long targetId, Role targetRole) {
+		if (actor.getId().equals(targetId)) {
+			return false;
+		}
+		return actor.getRole() == Role.ADMIN || (actor.getRole() == Role.MANAGER && targetRole == Role.MEMBER);
+	}
+
+	public boolean canChangeRole(UserPrincipal actor, Long targetId) {
+		return actor.getRole() == Role.ADMIN && !actor.getId().equals(targetId);
+	}
+
+	public boolean canDelete(UserPrincipal actor, Long targetId) {
+		return actor.getRole() == Role.ADMIN && !actor.getId().equals(targetId);
+	}
+
 	private void assertCanActOnOther(UserPrincipal actor, User target) {
 		if (actor.getRole() == Role.ADMIN) {
 			return;

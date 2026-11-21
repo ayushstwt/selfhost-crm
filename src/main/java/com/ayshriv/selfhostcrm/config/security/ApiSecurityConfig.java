@@ -55,6 +55,17 @@ public class ApiSecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/api/invitations").hasAuthority(Permission.INVITATION_MANAGE.name())
 						.requestMatchers(HttpMethod.DELETE, "/api/invitations/*").hasAuthority(Permission.INVITATION_MANAGE.name())
 						.requestMatchers(HttpMethod.GET, "/api/audit").hasAuthority(Permission.AUDIT_VIEW_ALL.name())
+						.requestMatchers(HttpMethod.GET, "/api/invitations/*").hasAuthority(Permission.INVITATION_MANAGE.name())
+						// Teams: reads need a sign-in (the service limits them to the caller's teams); changes need a permission.
+						.requestMatchers(HttpMethod.GET, "/api/teams", "/api/teams/*", "/api/teams/*/members",
+								"/api/teams/*/members/*", "/api/users/*/teams").authenticated()
+						.requestMatchers(HttpMethod.POST, "/api/teams").hasAuthority(Permission.TEAM_MANAGE.name())
+						.requestMatchers(HttpMethod.PATCH, "/api/teams/*").hasAuthority(Permission.TEAM_MANAGE.name())
+						.requestMatchers(HttpMethod.DELETE, "/api/teams/*").hasAuthority(Permission.TEAM_MANAGE.name())
+						.requestMatchers(HttpMethod.PUT, "/api/teams/*/members/*")
+								.hasAuthority(Permission.TEAM_MEMBERS_MANAGE.name())
+						.requestMatchers(HttpMethod.DELETE, "/api/teams/*/members/*")
+								.hasAuthority(Permission.TEAM_MEMBERS_MANAGE.name())
 						// Deny by default: an endpoint without a rule above is reachable by ADMIN only.
 						.anyRequest().hasRole(Role.ADMIN.name()))
 				.exceptionHandling(ex -> ex

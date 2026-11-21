@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Fragments only (never rendered as a page). -->
+
+<!-- One table row. Swapped in place after enable/disable and role changes. -->
+<table>
+<tr th:fragment="row" th:id="${'user-' + row.user.id}">
+	<td th:text="${row.user.displayName}">Name</td>
+	<td th:text="${row.user.email}">a@example.com</td>
+	<td th:text="${row.user.role}">MEMBER</td>
+	<td><span class="badge" th:classappend="${row.user.enabled} ? 'ok' : 'off'" th:text="${row.user.enabled} ? 'Enabled' : 'Disabled'">Enabled</span></td>
+	<td class="actions">
+		<form th:if="${row.canToggle}" th:action="@{/admin/users/{id}/enabled(id=${row.user.id})}" method="post" class="inline"
+		      th:hx-post="@{/admin/users/{id}/enabled(id=${row.user.id})}" th:hx-target="${'#user-' + row.user.id}"
+		      hx-swap="outerHTML">
+			<input type="hidden" name="enabled" th:value="${!row.user.enabled}">
+			<button type="submit" class="btn-sm" th:text="${row.user.enabled} ? 'Disable' : 'Enable'">Disable</button>
+		</form>
+		<form th:if="${row.canChangeRole}" th:action="@{/admin/users/{id}/role(id=${row.user.id})}" method="post" class="inline"
+		      th:hx-post="@{/admin/users/{id}/role(id=${row.user.id})}" th:hx-target="${'#user-' + row.user.id}"
+		      hx-swap="outerHTML">
+			<select name="role" aria-label="Role">
+				<option th:each="r : ${roles}" th:value="${r}" th:text="${r}" th:selected="${r == row.user.role}">MEMBER</option>
+			</select>
+			<button type="submit" class="btn-sm">Set role</button>
+		</form>
+		<form th:if="${row.canDelete}" th:action="@{/admin/users/{id}/delete(id=${row.user.id})}" method="post" class="inline"
+		      th:hx-post="@{/admin/users/{id}/delete(id=${row.user.id})}" th:hx-target="${'#user-' + row.user.id}"
+		      hx-swap="outerHTML" hx-confirm="Delete this user? This cannot be undone.">
+			<button type="submit" class="btn-sm danger">Delete</button>
+		</form>
+	</td>
+</tr>
+</table>
+
+<!-- Options for a searchable user select. -->
+<select th:fragment="options">
+	<option th:if="${blank}" value="">Anyone</option>
+	<option th:each="u : ${options}" th:value="${u.id}" th:text="${u.displayName + ' (' + u.email + ')'}">Name (a@example.com)</option>
+</select>
+
+<!-- Result of creating an invitation: the one-time link (shown only in this response) and a fresh form. -->
+<div th:fragment="inviteResult" class="result">
+	<div class="notice" role="status">
+		<p>Invitation for <strong th:text="${created.email}">new@example.com</strong>
+		   (<span th:text="${created.role}">MEMBER</span>) created. Copy the link now. It is shown only once.</p>
+		<p><code class="one-time" th:text="${created.acceptUrl}">https://crm.example.com/invite/token</code></p>
+		<p class="muted">Valid until <span th:text="${created.expiresAt}">2026-01-01T00:00:00Z</span>.</p>
+	</div>
+	<form th:replace="~{admin/users :: inviteForm}"></form>
+</div>
+</body>
+</html>

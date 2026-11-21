@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Audit log')}"></head>
+<body th:attr="hx-headers=${'{&quot;' + _csrf.headerName + '&quot;:&quot;' + _csrf.token + '&quot;}'}">
+<nav th:replace="~{fragments/layout :: nav('audit')}"></nav>
+<main class="page">
+	<h1>Audit log</h1>
+	<div id="flash" aria-live="polite"></div>
+	<section class="panel">
+		<form th:action="@{/admin/audit}" method="get" class="filters" th:hx-get="@{/admin/audit}"
+		      hx-target="#audit-table" hx-swap="innerHTML" hx-trigger="submit, change">
+			<label>Actor
+				<input id="actor-search" type="search" placeholder="Search a user" autocomplete="off"
+				       th:hx-get="@{/admin/users/search(blank=true)}" hx-trigger="keyup changed delay:300ms"
+				       hx-target="#actor-select" hx-swap="innerHTML" hx-params="q" name="q">
+				<select id="actor-select" name="actorId">
+					<option value="">Anyone</option>
+					<option th:if="${actorId != ''}" th:value="${actorId}" selected th:text="${'User #' + actorId}">User</option>
+				</select>
+			</label>
+			<label>Action
+				<select name="action">
+					<option value="">Any action</option>
+					<option th:each="a : ${actions}" th:value="${a}" th:text="${a}" th:selected="${actionFilter == a.name()}">LOGIN</option>
+				</select>
+			</label>
+			<label>Target type
+				<select name="targetType">
+					<option value="">Any target</option>
+					<option th:each="t : ${targetTypes}" th:value="${t}" th:text="${t}" th:selected="${typeFilter == t.name()}">USER</option>
+				</select>
+			</label>
+			<label>From <input type="date" name="from" th:value="${from}"></label>
+			<label>To <input type="date" name="to" th:value="${to}"></label>
+			<button type="submit" class="btn-sm">Filter</button>
+		</form>
+		<div id="audit-table">
+			<div th:fragment="table">
+				<table>
+					<thead><tr><th>When (UTC)</th><th>Actor</th><th>Action</th><th>Target</th><th>Affected user</th></tr></thead>
+					<tbody>
+					<tr th:each="e : ${entries}">
+						<td th:text="${e.createdOn}">2026-01-01T00:00:00Z</td>
+						<td th:text="${e.actorName != null} ? ${e.actorName} : ${'User #' + e.actorId}">Admin</td>
+						<td th:text="${e.action}">LOGIN</td>
+						<td>
+							<th:block th:if="${e.targetType != null}">
+								<a th:if="${e.targetType.name() == 'TEAM'}" th:href="@{/admin/teams/{id}(id=${e.targetId})}"
+								   th:text="${'TEAM #' + e.targetId}">TEAM #1</a>
+								<span th:unless="${e.targetType.name() == 'TEAM'}" th:text="${e.targetType + ' #' + e.targetId}">USER #1</span>
+							</th:block>
+						</td>
+						<td th:text="${e.relatedUserId != null} ? ${'User #' + e.relatedUserId} : ''">User #2</td>
+					</tr>
+					<tr th:if="${#lists.isEmpty(entries)}"><td colspan="5" class="muted">No entries match.</td></tr>
+					</tbody>
+				</table>
+				<p class="pager" th:if="${page.totalPages > 1}">
+					<a th:if="${page.hasPrevious()}"
+					   th:href="@{/admin/audit(actorId=${actorId},action=${actionFilter},targetType=${typeFilter},from=${from},to=${to},page=${page.number - 1})}"
+					   th:hx-get="@{/admin/audit(actorId=${actorId},action=${actionFilter},targetType=${typeFilter},from=${from},to=${to},page=${page.number - 1})}"
+					   hx-target="#audit-table" hx-swap="innerHTML">Previous</a>
+					<span th:text="${'Page ' + (page.number + 1) + ' of ' + page.totalPages}">Page 1 of 1</span>
+					<a th:if="${page.hasNext()}"
+					   th:href="@{/admin/audit(actorId=${actorId},action=${actionFilter},targetType=${typeFilter},from=${from},to=${to},page=${page.number + 1})}"
+					   th:hx-get="@{/admin/audit(actorId=${actorId},action=${actionFilter},targetType=${typeFilter},from=${from},to=${to},page=${page.number + 1})}"
+					   hx-target="#audit-table" hx-swap="innerHTML">Next</a>
+				</p>
+			</div>
+		</div>
+	</section>
+</main>
+</body>
+</html>

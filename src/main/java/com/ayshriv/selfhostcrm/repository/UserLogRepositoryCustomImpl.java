@@ -37,7 +37,7 @@ class UserLogRepositoryCustomImpl implements UserLogRepositoryCustom {
 		var actor = root.join("user", JoinType.LEFT);
 		query.select(cb.construct(AuditLogResponse.class, root.get("id"), root.get("createdOn"),
 				root.get("action"), root.get("subAction"), root.get("userId"), actor.get("displayName"),
-				root.get("targetType"), root.get("targetId")));
+				root.get("targetType"), root.get("targetId"), root.get("relatedUserId")));
 		query.where(predicates(cb, root, actorId, action, targetType, targetId, from, to));
 		query.orderBy(cb.desc(root.get("createdOn")), cb.desc(root.get("id")));
 		List<AuditLogResponse> content = em.createQuery(query).setFirstResult((int) pageable.getOffset())

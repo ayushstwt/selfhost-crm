@@ -2,6 +2,7 @@ package com.ayshriv.selfhostcrm.repository;
 
 import com.ayshriv.selfhostcrm.domain.User;
 import jakarta.persistence.LockModeType;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -37,6 +38,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 	List<User> lockEnabledAdmins();
 
 	/** Includes soft-deleted users on purpose: once any user ever existed, setup stays closed. */
+	/** Bulk update: sets {@code updated_on} explicitly. Used to cut off several users at once. */
+	@org.springframework.data.jpa.repository.Modifying(flushAutomatically = true, clearAutomatically = true)
+	@Query(value = "update users set access_changed_at = :at, updated_on = :now where id in (:ids) and is_deleted = false",
+			nativeQuery = true)
+	int bumpAccessChangedAt(@Param("ids") java.util.Collection<Long> ids, @Param("at") Instant at, @Param("now") Instant now);
+
 	@Query(value = "select exists (select 1 from users)", nativeQuery = true)
 	boolean existsAnyUser();
 

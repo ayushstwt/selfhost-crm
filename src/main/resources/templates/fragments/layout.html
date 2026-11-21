@@ -1,12 +1,33 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:fragment="head(title)">
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<!-- HTMX 2 does not swap 4xx by default; swap them so inline validation errors and messages show up. -->
+	<meta name="htmx-config" content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"[45]..","swap":true,"error":true}]}'>
 	<title th:text="${title} + ' | Selfhost CRM'">Selfhost CRM</title>
 	<link rel="stylesheet" th:href="@{/css/app.css}">
 	<script th:src="@{/webjars/htmx.org/2.0.11/dist/htmx.min.js}" defer></script>
 </head>
 <body>
+<!-- Role-aware navigation. Hiding a link is not security: every page and action is authorized on the server. -->
+<nav th:fragment="nav(active)" class="topnav">
+	<strong class="brand">Selfhost CRM</strong>
+	<a th:href="@{/}" th:classappend="${active == 'home'} ? 'active'">Home</a>
+	<a th:href="@{/admin/teams}" th:classappend="${active == 'teams'} ? 'active'">Teams</a>
+	<a sec:authorize="hasAuthority('USER_VIEW')" th:href="@{/admin/users}"
+	   th:classappend="${active == 'users'} ? 'active'">Users</a>
+	<a sec:authorize="hasAuthority('AUDIT_VIEW_ALL')" th:href="@{/admin/audit}"
+	   th:classappend="${active == 'audit'} ? 'active'">Audit log</a>
+	<span class="spacer"></span>
+	<a th:href="@{/account/password}">Password</a>
+	<form th:action="@{/logout}" method="post" class="inline">
+		<button type="submit" class="link">Sign out</button>
+	</form>
+</nav>
+<!-- Error or notice swapped into #flash by HTMX (status code is kept). -->
+<p th:fragment="flash" class="error" role="alert" th:text="${message}">Something went wrong</p>
+<!-- Swapped in place of a removed element. -->
+<th:block th:fragment="empty"></th:block>
 </body>
 </html>

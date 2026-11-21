@@ -28,6 +28,8 @@ class RbacSchemaIntegrationTest {
 		jdbc.execute("delete from user_log");
 		jdbc.execute("delete from invitations");
 		jdbc.execute("delete from refresh_tokens");
+		jdbc.execute("delete from team_members");
+		jdbc.execute("delete from teams");
 		jdbc.execute("delete from users");
 	}
 
@@ -68,6 +70,38 @@ class RbacSchemaIntegrationTest {
 				insert into user_log (created_on, updated_on, user_id, action, sub_action, target_type)
 				values (now(), now(), ?, 'USER_UPDATED', 'SUCCESS', 'USER')""", user))
 				.isInstanceOf(DataIntegrityViolationException.class);
+	}
+
+	@Test
+	void teamNamesAreUniqueCaseInsensitivelyAmongLiveTeamsOnly() {
+		insertTeam("Sales", true);
+		insertTeam("Sales", false);
+		assertThatThrownBy(() -> insertTeam("SALES", false)).isInstanceOf(DataIntegrityViolationException.class);
+		assertThatThrownBy(() -> insertTeam("  ", false)).isInstanceOf(DataIntegrityViolationException.class);
+	}
+
+	@Test
+	void membershipIsUniquePerTeamAndUserAndRoleIsChecked() {
+		long user = insertUser("m@example.com", false);
+		long team = insertTeam("Ops", false);
+		String sql = "insert into team_members (created_on, updated_on, team_id, user_id, team_role) values (now(), now(), ?, ?, ?)";
+		jdbc.update(sql, team, user, "LEAD");
+		assertThatThrownBy(() -> jdbc.update(sql, team, user, "MEMBER"))
+				.isInstanceOf(DataIntegrityViolationException.class);
+		long other = insertUser("o@example.com", false);
+		assertThatThrownBy(() -> jdbc.update(sql, team, other, "BOSS")).isInstanceOf(DataIntegrityViolationException.class);
+	}
+
+	@Test
+	void teamTargetTypeIsAcceptedAndRelatedUserNeedsATarget() {
+		long user = insertUser("t@example.com", false);
+		jdbc.update("insert into user_log (created_on, updated_on, user_id, action, sub_action, target_type, target_id, related_user_id) values (now(), now(), ?, 'TEAM_MEMBER_ADDED', 'SUCCESS', 'TEAM', 1, ?)", user, user);
+		assertThatThrownBy(() -> jdbc.update("insert into user_log (created_on, updated_on, user_id, action, sub_action, related_user_id) values (now(), now(), ?, 'TEAM_MEMBER_ADDED', 'SUCCESS', ?)", user, user))
+				.isInstanceOf(DataIntegrityViolationException.class);
+	}
+
+	private long insertTeam(String name, boolean deleted) {
+		return jdbc.queryForObject("insert into teams (created_on, updated_on, is_deleted, name) values (now(), now(), ?, ?) returning id", Long.class, deleted, name);
 	}
 
 	@Test

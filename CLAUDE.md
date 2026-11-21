@@ -14,6 +14,8 @@ No tenant IDs, no tenant columns, no tenant switching, no per-tenant config. Do 
 - Enforce with `@PreAuthorize("hasAuthority('X')")` on **service** methods; target-based rules (who may act on whom, self-actions, last-admin guard) live in `UserAccessPolicy`. Controllers stay thin and pass the acting `UserPrincipal` (the API principal is `UserPrincipal`, not `Jwt`).
 - Deny by default: `ApiSecurityConfig` lists every endpoint's permission and ends with `anyRequest().hasRole("ADMIN")`. A new endpoint needs a URL rule, a `@PreAuthorize`, and a row in the role matrix test.
 - Changing role, enabled or deleted state goes through `AccessRevocationService` (bumps `users.access_changed_at`, revokes refresh tokens), after taking the admin lock in `UserManagementService`. Details: `docs/rbac.md`.
+- Teams: `TeamAccessPolicy` holds the team rules (who sees a team, who changes members); `TeamService` enforces with `@PreAuthorize` (`TEAM_VIEW_ALL`, `TEAM_MANAGE`, `TEAM_MEMBERS_MANAGE`). The principal carries the user's team memberships (loaded with the user row on every request, two queries): never add a per-request lookup elsewhere. A non-admin gets 403 for any team they are not in, existing or not. `access_changed_at` is bumped only when someone loses LEAD rights (rule in `docs/rbac.md`).
+- Admin web pages (`/admin/**`) are deny-by-default in `WebSecurityConfig` (unlisted routes are ADMIN only); controllers in `web.admin` are thin, row and button visibility is cosmetic, services enforce. HTMX fragments live in `templates/admin`; fragments that need request data must not sit in a page where they would render with no model. One-time secrets (invitation links) appear only in the response that creates them (`Cache-Control: no-store`), never in session, flash or log.
 
 ## Backend guide
 `docs/Best_practices_backend.md` is the source of truth for API responses, exception handling and JPA entities. Read it before touching those areas. Where it uses the placeholder package `com.example.app` or the folder names `controller`, `dto`, `entity`, use the mapping in "Package layout" below. If this file and the guide disagree, this file wins.
@@ -69,12 +71,12 @@ Group by feature inside each layer once features exist (e.g. `web.contact`). Mig
 - Defaults come from field initializers; callbacks only set timestamps. Never set `id`, `createdOn` or `updatedOn` by hand.
 - No Jackson annotations on entities. Entities are never serialized.
 - Lowercase snake_case column names. The JVM and Hibernate run in UTC (`hibernate.jdbc.time_zone=UTC`).
-- Soft delete: use `@SQLRestriction("is_deleted = false")` on entities that support it (`User`). Append-only/never-soft-deleted entities (`UserLog`, `RefreshToken`, `Invitation`) have no filter on purpose and say so in a class comment. Never load a lazy `User` reference from them (it may be soft-deleted): store the id or use a DTO projection with a LEFT JOIN. Bulk `UPDATE` queries must set `updated_on` explicitly.
+- Soft delete: use `@SQLRestriction("is_deleted = false")` on entities that support it (`User`, `Team`, `TeamMember`). Append-only/never-soft-deleted entities (`UserLog`, `RefreshToken`, `Invitation`) have no filter on purpose and say so in a class comment. Never load a lazy `User` reference from them (it may be soft-deleted): store the id or use a DTO projection with a LEFT JOIN. Bulk `UPDATE` queries must set `updated_on` explicitly.
 - Email uniqueness is a partial unique index on live users, so a deleted user's email is reusable.
 - Subclass overrides of lifecycle callbacks must call `super`.
 
 ## Audit log
-- `UserLog`: lazy `@ManyToOne` user (the actor, always set server-side), `action` and `subAction` as enums or constants (never free text), optional `targetType`/`targetId`, index on `(user_id, created_on)`. Adding a `UserAction` value needs a migration that replaces `ck_user_log_action` (a test fails on drift).
+- `UserLog`: lazy `@ManyToOne` user (the actor, always set server-side), `action` and `subAction` as enums or constants (never free text), optional `targetType`/`targetId`, index on `(user_id, created_on)`. Adding a `UserAction` value needs a migration that replaces `ck_user_log_action` (a test fails on drift). Team member actions put the team in `targetId` and the affected user in `relatedUserId`.
 - Read through a DTO projection, paginated, ordered by `createdOn` desc. No transient fields.
 - Never store passwords, tokens or request bodies in the log.
 

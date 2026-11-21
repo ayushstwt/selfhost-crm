@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Users')}"></head>
+<body th:attr="hx-headers=${'{&quot;' + _csrf.headerName + '&quot;:&quot;' + _csrf.token + '&quot;}'}">
+<nav th:replace="~{fragments/layout :: nav('users')}"></nav>
+<main class="page">
+	<h1>Users</h1>
+	<div id="flash" aria-live="polite"></div>
+
+	<section class="panel">
+		<h2>Invite someone</h2>
+		<p class="muted">No email is sent. You get a one-time link to pass on; it is shown once and cannot be shown again.</p>
+		<div id="invite-panel">
+			<form th:fragment="inviteForm" th:action="@{/admin/invitations}" method="post" class="stack"
+			      th:hx-post="@{/admin/invitations}" hx-target="#invite-panel" hx-swap="innerHTML">
+				<label for="invite-email">Email</label>
+				<input id="invite-email" name="email" type="email" th:value="${email}" required>
+				<p class="error" th:if="${errors['email']}" th:text="${errors['email']}"></p>
+				<label for="invite-role">Role</label>
+				<select id="invite-role" name="role">
+					<option th:each="r : ${inviteRoles}" th:value="${r}" th:text="${r}">MEMBER</option>
+				</select>
+				<p class="error" th:if="${errors['role']}" th:text="${errors['role']}"></p>
+				<button type="submit" class="btn">Create invitation</button>
+			</form>
+		</div>
+	</section>
+
+	<section class="panel">
+		<h2>Pending invitations</h2>
+		<div id="invitations" th:fragment="invitations" th:hx-get="@{/admin/invitations}"
+		     hx-trigger="invitationsChanged from:body" hx-swap="outerHTML">
+			<p class="muted" th:if="${#lists.isEmpty(invitations)}">No pending invitations.</p>
+			<table th:unless="${#lists.isEmpty(invitations)}">
+				<thead><tr><th>Email</th><th>Role</th><th>Invited by</th><th>Expires</th><th></th></tr></thead>
+				<tbody>
+				<tr th:each="i : ${invitations}">
+					<td th:text="${i.email}">a@example.com</td>
+					<td th:text="${i.role}">MEMBER</td>
+					<td th:text="${i.invitedByName != null} ? ${i.invitedByName} : '(deleted user)'">Admin</td>
+					<td th:text="${i.expiresAt}">2026-01-01T00:00:00Z</td>
+					<td>
+						<form th:action="@{/admin/invitations/{id}/revoke(id=${i.id})}" method="post" class="inline"
+						      th:hx-post="@{/admin/invitations/{id}/revoke(id=${i.id})}" hx-target="#invitations"
+						      hx-swap="outerHTML" hx-confirm="Revoke this invitation?">
+							<button type="submit" class="btn-sm danger">Revoke</button>
+						</form>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</section>
+
+	<section class="panel">
+		<h2>All users</h2>
+		<form th:action="@{/admin/users}" method="get" class="filters" th:hx-get="@{/admin/users}"
+		      hx-target="#users-table" hx-swap="innerHTML" hx-trigger="submit, change, keyup changed delay:300ms from:#q">
+			<input id="q" name="q" type="search" placeholder="Search name or email" th:value="${q}">
+			<select name="role" aria-label="Role">
+				<option value="">Any role</option>
+				<option th:each="r : ${roles}" th:value="${r}" th:text="${r}" th:selected="${roleFilter == r.name()}">ADMIN</option>
+			</select>
+			<select name="enabled" aria-label="Enabled">
+				<option value="">Enabled or disabled</option>
+				<option value="true" th:selected="${enabledFilter == 'true'}">Enabled</option>
+				<option value="false" th:selected="${enabledFilter == 'false'}">Disabled</option>
+			</select>
+			<button type="submit" class="btn-sm">Filter</button>
+		</form>
+		<div id="users-table">
+			<div th:fragment="table">
+				<table>
+					<thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+					<tbody>
+					<th:block th:each="row : ${rows}"><tr th:replace="~{admin/users-fragments :: row}"></tr></th:block>
+					<tr th:if="${#lists.isEmpty(rows)}"><td colspan="5" class="muted">No users match.</td></tr>
+					</tbody>
+				</table>
+				<p class="pager" th:if="${page.totalPages > 1}">
+					<a th:if="${page.hasPrevious()}"
+					   th:href="@{/admin/users(q=${q},role=${roleFilter},enabled=${enabledFilter},page=${page.number - 1})}"
+					   th:hx-get="@{/admin/users(q=${q},role=${roleFilter},enabled=${enabledFilter},page=${page.number - 1})}"
+					   hx-target="#users-table" hx-swap="innerHTML">Previous</a>
+					<span th:text="${'Page ' + (page.number + 1) + ' of ' + page.totalPages}">Page 1 of 1</span>
+					<a th:if="${page.hasNext()}"
+					   th:href="@{/admin/users(q=${q},role=${roleFilter},enabled=${enabledFilter},page=${page.number + 1})}"
+					   th:hx-get="@{/admin/users(q=${q},role=${roleFilter},enabled=${enabledFilter},page=${page.number + 1})}"
+					   hx-target="#users-table" hx-swap="innerHTML">Next</a>
+				</p>
+			</div>
+		</div>
+	</section>
+</main>
+</body>
+</html>

@@ -45,6 +45,13 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 			+ "where user_id = :userId and revoked_at is null", nativeQuery = true)
 	int revokeAllForUser(@Param("userId") Long userId, @Param("now") Instant now);
 
+	/** Same for several users at once (team deletion cuts off every former lead). */
+	@Transactional
+	@Modifying(clearAutomatically = true, flushAutomatically = true)
+	@Query(value = "update refresh_tokens set revoked_at = :now, updated_on = :now "
+			+ "where user_id in (:userIds) and revoked_at is null", nativeQuery = true)
+	int revokeAllForUsers(@Param("userIds") java.util.Collection<Long> userIds, @Param("now") Instant now);
+
 	/** Detaches live rows from expired ones so the expired rows can be deleted without breaking the FK. */
 	@Transactional
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
