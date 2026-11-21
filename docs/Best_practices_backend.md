@@ -814,7 +814,7 @@ Use this list when starting a project (build these in from day one) or when revi
 **Exceptions**
 - [ ] Errors are thrown as exceptions, never hand-built in controllers.
 - [ ] Every enum-based error has an `ErrorMessages` constant with the right `HttpStatus`.
-- [ ] Constraint `message` values on path/query parameters match an `ErrorMessages` constant name.
+- [ ] Constraints on path/query parameters need no special message: a violation falls back to `E005` (400) with one field-level entry in `errors[]` per violation (field = the parameter's leaf name, message = the constraint message). Only a `message` that equals an `ErrorMessages` constant name maps to that constant instead.
 - [ ] All error responses use one body shape, with an `errorCode`.
 - [ ] The catch-all handler returns a generic message, not `ex.getMessage()`.
 - [ ] Expected client errors (`4xx`) are logged at `warn`, unexpected ones (`5xx`) at `error` with the stack trace.

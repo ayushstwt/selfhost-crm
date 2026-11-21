@@ -9,6 +9,12 @@ Spring Boot 4.1.x, Java 21, Maven (wrapper), YAML config, PostgreSQL, Flyway, Sp
 ## Single-tenant rule
 No tenant IDs, no tenant columns, no tenant switching, no per-tenant config. Do not add multi-tenancy abstractions. Roles: Admin, Manager, Member, plus teams.
 
+## Roles and permissions
+- Roles are global (ADMIN, MANAGER, MEMBER). `RolePermissions` is the single role-to-`Permission` mapping; both security chains expose `ROLE_<role>` plus one authority per permission. The JWT carries only the role.
+- Enforce with `@PreAuthorize("hasAuthority('X')")` on **service** methods; target-based rules (who may act on whom, self-actions, last-admin guard) live in `UserAccessPolicy`. Controllers stay thin and pass the acting `UserPrincipal` (the API principal is `UserPrincipal`, not `Jwt`).
+- Deny by default: `ApiSecurityConfig` lists every endpoint's permission and ends with `anyRequest().hasRole("ADMIN")`. A new endpoint needs a URL rule, a `@PreAuthorize`, and a row in the role matrix test.
+- Changing role, enabled or deleted state goes through `AccessRevocationService` (bumps `users.access_changed_at`, revokes refresh tokens), after taking the admin lock in `UserManagementService`. Details: `docs/rbac.md`.
+
 ## Backend guide
 `docs/Best_practices_backend.md` is the source of truth for API responses, exception handling and JPA entities. Read it before touching those areas. Where it uses the placeholder package `com.example.app` or the folder names `controller`, `dto`, `entity`, use the mapping in "Package layout" below. If this file and the guide disagree, this file wins.
 
@@ -63,11 +69,12 @@ Group by feature inside each layer once features exist (e.g. `web.contact`). Mig
 - Defaults come from field initializers; callbacks only set timestamps. Never set `id`, `createdOn` or `updatedOn` by hand.
 - No Jackson annotations on entities. Entities are never serialized.
 - Lowercase snake_case column names. The JVM and Hibernate run in UTC (`hibernate.jdbc.time_zone=UTC`).
-- Soft delete: use `@SQLRestriction("is_deleted = false")` on entities that support it. Bulk `UPDATE` queries must set `updated_on` explicitly.
+- Soft delete: use `@SQLRestriction("is_deleted = false")` on entities that support it (`User`). Append-only/never-soft-deleted entities (`UserLog`, `RefreshToken`, `Invitation`) have no filter on purpose and say so in a class comment. Never load a lazy `User` reference from them (it may be soft-deleted): store the id or use a DTO projection with a LEFT JOIN. Bulk `UPDATE` queries must set `updated_on` explicitly.
+- Email uniqueness is a partial unique index on live users, so a deleted user's email is reusable.
 - Subclass overrides of lifecycle callbacks must call `super`.
 
 ## Audit log
-- `UserLog`: lazy `@ManyToOne` user (always set server-side), `action` and `subAction` as enums or constants (never free text), index on `(user_id, created_on)`.
+- `UserLog`: lazy `@ManyToOne` user (the actor, always set server-side), `action` and `subAction` as enums or constants (never free text), optional `targetType`/`targetId`, index on `(user_id, created_on)`. Adding a `UserAction` value needs a migration that replaces `ck_user_log_action` (a test fails on drift).
 - Read through a DTO projection, paginated, ordered by `createdOn` desc. No transient fields.
 - Never store passwords, tokens or request bodies in the log.
 
@@ -84,6 +91,7 @@ Every feature ships with tests. Use Testcontainers (PostgreSQL) for anything tou
 - Login failures must be indistinguishable: wrong password, unknown email and a locked account return the same generic error (`E006`). Lockouts are only logged server-side.
 - `AuthService` must NOT be `@Transactional` (failure counters and audit rows are committed before it throws). `AuthServiceTransactionTest` enforces this.
 - Changing a password sets `users.credentials_changed_at`: refresh tokens are revoked and other web sessions end (`ActiveUserSessionFilter`).
+- `APP_BASE_URL` (absolute http(s) URL, validated in prod) builds invitation links. Invitation tokens are 256-bit random, only the SHA-256 is stored, and every unusable token returns the same `E016`.
 - New web pages must put the CSRF token on `<body hx-headers=...>` (copy from `templates/login.html`) so HTMX requests carry it.
 
 ## Git

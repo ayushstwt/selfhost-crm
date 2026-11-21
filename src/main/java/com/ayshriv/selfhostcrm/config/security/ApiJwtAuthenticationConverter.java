@@ -1,11 +1,11 @@
 package com.ayshriv.selfhostcrm.config.security;
 
 import com.ayshriv.selfhostcrm.service.UserService;
+import java.time.Instant;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,7 +33,12 @@ public class ApiJwtAuthenticationConverter implements Converter<Jwt, AbstractAut
 		UserPrincipal principal = userService.findPrincipal(userId)
 				.filter(UserPrincipal::isEnabled)
 				.orElseThrow(() -> new BadCredentialsException("Unknown or disabled user"));
-		return new JwtAuthenticationToken(jwt, principal.getAuthorities(), String.valueOf(principal.getId()));
+		// Role, enabled or deleted state changed after this token was issued: the token is dead.
+		Instant issuedAt = jwt.getIssuedAt();
+		if (issuedAt == null || issuedAt.isBefore(principal.getAccessChangedAt())) {
+			throw new BadCredentialsException("Token issued before the last access change");
+		}
+		return new ApiAuthenticationToken(principal, jwt);
 	}
 
 }

@@ -41,6 +41,10 @@ management:
       show-details: never
 
 app:
+  # Public address of this install; used to build invitation links. Required (absolute http(s) URL) in prod.
+  base-url: ${APP_BASE_URL:}
+  invitations:
+    ttl: ${INVITATION_TTL:7d}
   security:
     jwt:
       # HS256 signing secret. Required (>= 32 bytes) in the prod profile.

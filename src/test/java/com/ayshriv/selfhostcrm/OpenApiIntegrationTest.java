@@ -41,6 +41,7 @@ class OpenApiIntegrationTest {
 	@Test
 	void apiDocsAreNotPublicButContainTheEnvelopeExamplesForASignedInUser() throws Exception {
 		jdbc.execute("delete from user_log");
+		jdbc.execute("delete from invitations");
 		jdbc.execute("delete from refresh_tokens");
 		jdbc.execute("delete from users");
 		User u = new User();

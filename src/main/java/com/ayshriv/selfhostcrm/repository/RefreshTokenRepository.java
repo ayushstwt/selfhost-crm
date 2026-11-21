@@ -17,9 +17,15 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 	@Query("select t from RefreshToken t join fetch t.user where t.tokenHash = :hash")
 	Optional<RefreshToken> findByTokenHash(@Param("hash") String hash);
 
-	/** Row lock: two concurrent refreshes with the same token are serialized. */
+	/**
+	 * Row lock: two concurrent refreshes with the same token are serialized. Tokens of soft-deleted users
+	 * are not returned (the {@code exists} subquery goes through User's {@code @SQLRestriction}); otherwise
+	 * touching the lazy {@code user} of such a token would throw and surface as a 500 instead of the
+	 * generic 401.
+	 */
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
-	@Query("select t from RefreshToken t where t.tokenHash = :hash")
+	@Query("select t from RefreshToken t where t.tokenHash = :hash "
+			+ "and exists (select 1 from User u where u.id = t.user.id)")
 	Optional<RefreshToken> findForUpdateByTokenHash(@Param("hash") String hash);
 
 	/** Bulk updates skip lifecycle callbacks, so updated_on is set explicitly. */
@@ -29,10 +35,14 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 			+ "where t.familyId = :familyId and t.revokedAt is null")
 	int revokeFamily(@Param("familyId") UUID familyId, @Param("now") Instant now);
 
+	/**
+	 * Native on purpose: the JPQL form went through the soft-deleted-user filter and revoked nothing when
+	 * the user had just been deleted in the same transaction.
+	 */
 	@Transactional
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
-	@Query("update RefreshToken t set t.revokedAt = :now, t.updatedOn = :now "
-			+ "where t.user.id = :userId and t.revokedAt is null")
+	@Query(value = "update refresh_tokens set revoked_at = :now, updated_on = :now "
+			+ "where user_id = :userId and revoked_at is null", nativeQuery = true)
 	int revokeAllForUser(@Param("userId") Long userId, @Param("now") Instant now);
 
 	/** Detaches live rows from expired ones so the expired rows can be deleted without breaking the FK. */

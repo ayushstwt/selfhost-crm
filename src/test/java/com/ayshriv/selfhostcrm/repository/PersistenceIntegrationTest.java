@@ -49,6 +49,7 @@ class PersistenceIntegrationTest {
 	@BeforeEach
 	void clean() {
 		jdbc.execute("delete from user_log");
+		jdbc.execute("delete from invitations");
 		jdbc.execute("delete from refresh_tokens");
 		jdbc.execute("delete from users");
 	}

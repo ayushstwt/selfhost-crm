@@ -10,13 +10,7 @@ import com.ayshriv.selfhostcrm.domain.UserSubAction;
 import com.ayshriv.selfhostcrm.exception.BaseException;
 import com.ayshriv.selfhostcrm.exception.UnauthorizedException;
 import com.ayshriv.selfhostcrm.repository.RefreshTokenRepository;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.HexFormat;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,8 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class RefreshTokenService {
-
-	private static final SecureRandom RANDOM = new SecureRandom();
 
 	private final RefreshTokenRepository tokens;
 
@@ -101,9 +93,7 @@ public class RefreshTokenService {
 	}
 
 	private Created create(User user, UUID familyId, RefreshToken previous) {
-		byte[] bytes = new byte[32];
-		RANDOM.nextBytes(bytes);
-		String raw = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+		String raw = TokenHasher.newToken();
 
 		RefreshToken token = new RefreshToken();
 		token.setUser(user);
@@ -115,13 +105,7 @@ public class RefreshTokenService {
 	}
 
 	static String hash(String raw) {
-		try {
-			return HexFormat.of().formatHex(
-					MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.UTF_8)));
-		}
-		catch (NoSuchAlgorithmException e) {
-			throw new IllegalStateException("SHA-256 not available", e);
-		}
+		return TokenHasher.hash(raw);
 	}
 
 }

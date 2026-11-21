@@ -72,6 +72,7 @@ class ApiAuthIntegrationTest {
 	@BeforeEach
 	void seed() {
 		jdbc.execute("delete from user_log");
+		jdbc.execute("delete from invitations");
 		jdbc.execute("delete from refresh_tokens");
 		jdbc.execute("delete from users");
 		createUser(EMAIL, Role.MEMBER);

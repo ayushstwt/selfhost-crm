@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="referrer" content="no-referrer">
+	<title>Accept your invitation</title>
+	<link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body th:attr="hx-headers=${'{&quot;' + _csrf.headerName + '&quot;:&quot;' + _csrf.token + '&quot;}'}">
+<main class="card">
+	<h1>Join Selfhost CRM</h1>
+	<p>Create your account for <strong th:text="${email}">you@example.com</strong>.</p>
+	<form method="post" novalidate>
+		<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+		<label for="displayName">Display name</label>
+		<input id="displayName" name="displayName" type="text" autocomplete="name" th:value="${displayName}" required>
+		<p class="error" th:if="${errors['displayName']}" th:text="${errors['displayName']}"></p>
+
+		<label for="password">Password (12 to 128 characters)</label>
+		<input id="password" name="password" type="password" autocomplete="new-password" required>
+		<p class="error" th:if="${errors['password']}" th:text="${errors['password']}"></p>
+
+		<label for="confirmPassword">Confirm password</label>
+		<input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" required>
+		<p class="error" th:if="${errors['confirmPassword']}" th:text="${errors['confirmPassword']}"></p>
+
+		<button type="submit">Create account</button>
+	</form>
+</main>
+</body>
+</html>
