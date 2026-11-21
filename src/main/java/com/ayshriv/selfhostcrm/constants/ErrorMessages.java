@@ -27,6 +27,11 @@ public enum ErrorMessages {
 	/** One generic code for an invalid, expired, used or revoked invitation: nothing says which. */
 	E016(HttpStatus.BAD_REQUEST, "This invitation link is invalid or has expired"),
 	E017(HttpStatus.CONFLICT, "A pending invitation for this email was created by someone else"),
+	E018(HttpStatus.FORBIDDEN, "You are not allowed to perform this action on this team"),
+	E019(HttpStatus.NOT_FOUND, "Team not found"),
+	E020(HttpStatus.CONFLICT, "A team with this name already exists"),
+	E021(HttpStatus.NOT_FOUND, "This user is not a member of the team"),
+	E022(HttpStatus.CONFLICT, "A disabled user cannot be added to a team"),
 	E400(HttpStatus.BAD_REQUEST, "Bad request"),
 	E405(HttpStatus.METHOD_NOT_ALLOWED, "Method not allowed"),
 	E415(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported media type"),
@@ -38,7 +43,7 @@ public enum ErrorMessages {
 	 * disabled, E008 setup already completed (404 on purpose: /setup must look absent), E009 too many
 	 * attempts, E010 invalid or expired refresh token, E011 password equals email, E012 wrong current password, E013 target-based
 	 * denial (wrong scope for this user), E014 last active administrator, E015 self-action not allowed, E016 invalid
-	 * invitation, E017 pending invitation by someone else, E400/E405/E415/E500 generic HTTP errors.
+	 * invitation, E017 pending invitation by someone else, E018 not allowed on this team, E019 team not found, E020 team name in use, E021 not a team member, E022 disabled user cannot join a team, E400/E405/E415/E500 generic HTTP errors.
 	 */
 
 	private final HttpStatus httpStatus;

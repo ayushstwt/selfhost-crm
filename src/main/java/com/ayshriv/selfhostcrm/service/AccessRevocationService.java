@@ -2,8 +2,10 @@ package com.ayshriv.selfhostcrm.service;
 
 import com.ayshriv.selfhostcrm.domain.User;
 import com.ayshriv.selfhostcrm.repository.RefreshTokenRepository;
+import com.ayshriv.selfhostcrm.repository.UserRepository;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +19,10 @@ public class AccessRevocationService {
 
 	private final RefreshTokenRepository refreshTokens;
 
-	public AccessRevocationService(RefreshTokenRepository refreshTokens) {
+	private final UserRepository users;
+
+	public AccessRevocationService(RefreshTokenRepository refreshTokens, UserRepository users) {
+		this.users = users;
 		this.refreshTokens = refreshTokens;
 	}
 
@@ -33,6 +38,20 @@ public class AccessRevocationService {
 		// second is rejected too and simply has to be repeated).
 		user.setAccessChangedAt(now.truncatedTo(ChronoUnit.SECONDS).plusSeconds(1));
 		refreshTokens.revokeAllForUser(user.getId(), now);
+	}
+
+	/**
+	 * Same cut-off for several users in two bulk updates (used when a team is deleted). Like the single-user
+	 * variant it flushes and clears the persistence context, so call it last.
+	 */
+	@Transactional
+	public void revokeAccess(Collection<Long> userIds) {
+		if (userIds.isEmpty()) {
+			return;
+		}
+		Instant now = Instant.now();
+		users.bumpAccessChangedAt(userIds, now.truncatedTo(ChronoUnit.SECONDS).plusSeconds(1), now);
+		refreshTokens.revokeAllForUsers(userIds, now);
 	}
 
 }

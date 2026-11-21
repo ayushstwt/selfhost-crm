@@ -8,3 +8,35 @@ input { width: 100%; padding: .5rem; border: 1px solid var(--border); border-rad
 button { margin-top: 1.5rem; width: 100%; padding: .6rem; background: var(--accent); color: #fff; border: 0; border-radius: .25rem; font: inherit; cursor: pointer; }
 .error { color: var(--danger); font-size: .875rem; margin: .25rem 0 0; }
 .notice { background: #e0f2fe; padding: .5rem .75rem; border-radius: .25rem; }
+
+/* Admin pages */
+.page { max-width: 64rem; margin: 1.5rem auto; padding: 0 1rem; }
+.panel { background: #fff; border: 1px solid var(--border); border-radius: .5rem; padding: 1rem 1.25rem; margin: 1rem 0; }
+.panel h2 { margin-top: 0; font-size: 1.15rem; }
+.topnav { display: flex; gap: 1rem; align-items: center; padding: .6rem 1rem; background: #fff; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.topnav a { color: var(--fg); text-decoration: none; padding: .2rem .4rem; border-radius: .25rem; }
+.topnav a.active { background: #e0f2fe; font-weight: 600; }
+.topnav .spacer { flex: 1; }
+.topnav .brand { margin-right: .5rem; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+th { font-size: .8rem; text-transform: uppercase; color: #52606d; }
+.muted { color: #52606d; font-size: .9rem; }
+.badge { display: inline-block; padding: .05rem .5rem; border-radius: 1rem; background: #e4e7eb; font-size: .8rem; }
+.badge.ok { background: #d1fae5; }
+.badge.off { background: #fee2e2; }
+form.inline { display: inline-block; margin: 0 .25rem 0 0; }
+form.inline button, form.inline select { margin-top: 0; }
+form.stack { max-width: 28rem; }
+form.stack .btn { width: auto; }
+.filters { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; margin-bottom: .75rem; }
+.filters input, .filters select { width: auto; }
+.filters label { margin: 0; font-weight: 600; font-size: .85rem; }
+select { padding: .4rem; border: 1px solid var(--border); border-radius: .25rem; font: inherit; background: #fff; }
+.btn, .btn-sm { width: auto; margin-top: 1rem; }
+.btn-sm { margin-top: 0; padding: .3rem .6rem; font-size: .85rem; }
+.btn-sm.danger, .btn.danger { background: var(--danger); }
+button.link { background: none; color: var(--accent); width: auto; margin: 0; padding: .2rem .4rem; }
+.one-time { display: block; padding: .5rem; background: #fff; border: 1px dashed var(--accent); word-break: break-all; user-select: all; }
+.pager { display: flex; gap: 1rem; align-items: center; }
+.actions { white-space: nowrap; }

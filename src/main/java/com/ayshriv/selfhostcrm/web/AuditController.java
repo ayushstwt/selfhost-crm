@@ -35,7 +35,7 @@ public class AuditController {
 	}
 
 	@Operation(summary = "Audit log (all users)",
-			description = "Admin only. Newest first. Filters: actorId, action, targetType, targetId, from and to "
+			description = "Admin only. Newest first. Filters: actorId, action, targetType (USER, INVITATION, TEAM), targetId, from and to "
 					+ "(ISO-8601 instants, inclusive). size max 100. Never contains tokens, passwords or request bodies.")
 	@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "A page of audit entries",
 			content = @Content(examples = @ExampleObject(name = EX_AUDIT_PAGE, ref = REF + EX_AUDIT_PAGE)))

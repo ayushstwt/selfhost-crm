@@ -52,4 +52,8 @@ public class UserLog extends BaseEntity {
 	@Column(name = "target_id")
 	private Long targetId;
 
+	/** The user a team-member action was about (the target is then the team). Null for every other action. */
+	@Column(name = "related_user_id")
+	private Long relatedUserId;
+
 }

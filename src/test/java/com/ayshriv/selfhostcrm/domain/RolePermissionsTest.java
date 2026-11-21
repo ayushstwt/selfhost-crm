@@ -17,7 +17,17 @@ class RolePermissionsTest {
 	@Test
 	void managerCanViewUpdateAndInviteButNotChangeRolesDeleteOrReadAudit() {
 		assertThat(RolePermissions.of(Role.MANAGER)).containsExactlyInAnyOrder(Permission.USER_VIEW,
-				Permission.USER_UPDATE, Permission.USER_INVITE, Permission.INVITATION_MANAGE);
+				Permission.USER_UPDATE, Permission.USER_INVITE, Permission.INVITATION_MANAGE,
+				Permission.TEAM_MEMBERS_MANAGE);
+	}
+
+	@Test
+	void onlyAdminCanViewAllTeamsAndManageTeams() {
+		assertThat(RolePermissions.has(Role.ADMIN, Permission.TEAM_VIEW_ALL)).isTrue();
+		assertThat(RolePermissions.has(Role.ADMIN, Permission.TEAM_MANAGE)).isTrue();
+		assertThat(RolePermissions.has(Role.MANAGER, Permission.TEAM_VIEW_ALL)).isFalse();
+		assertThat(RolePermissions.has(Role.MANAGER, Permission.TEAM_MANAGE)).isFalse();
+		assertThat(RolePermissions.has(Role.MEMBER, Permission.TEAM_MEMBERS_MANAGE)).isFalse();
 	}
 
 	@Test

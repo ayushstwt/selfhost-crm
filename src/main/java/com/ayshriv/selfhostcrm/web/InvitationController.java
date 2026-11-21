@@ -2,6 +2,7 @@ package com.ayshriv.selfhostcrm.web;
 
 import static com.ayshriv.selfhostcrm.config.OpenApiConfig.EX_ACCEPTED_USER;
 import static com.ayshriv.selfhostcrm.config.OpenApiConfig.EX_INVALID_INVITATION;
+import static com.ayshriv.selfhostcrm.config.OpenApiConfig.EX_INVITATION;
 import static com.ayshriv.selfhostcrm.config.OpenApiConfig.EX_INVITATION_CREATED;
 import static com.ayshriv.selfhostcrm.config.OpenApiConfig.EX_INVITATION_PAGE;
 import static com.ayshriv.selfhostcrm.config.OpenApiConfig.REF;
@@ -73,6 +74,17 @@ public class InvitationController {
 		Page<InvitationResponse> result = invitationService.listPending(actor, page, size);
 		return ResponseEntity.ok(ApiResponse.success("Invitations retrieved successfully", result.getContent(),
 				PageMetadata.from(result)));
+	}
+
+	@Operation(summary = "Get one pending invitation",
+			description = "The target of the Location header returned on create. Admin: any pending invitation. "
+					+ "Manager: only their own (403 otherwise). Never contains the token. 404 once it is no longer pending.")
+	@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "The invitation",
+			content = @Content(examples = @ExampleObject(name = EX_INVITATION, ref = REF + EX_INVITATION)))
+	@GetMapping("/{id}")
+	public ResponseEntity<ApiResponse<InvitationResponse>> get(@AuthenticationPrincipal UserPrincipal actor,
+			@PathVariable Long id) {
+		return ResponseEntity.ok(ApiResponse.success("Invitation retrieved successfully", invitationService.get(actor, id)));
 	}
 
 	@Operation(summary = "Revoke an invitation",

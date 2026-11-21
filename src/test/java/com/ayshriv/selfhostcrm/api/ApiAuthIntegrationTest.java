@@ -74,6 +74,8 @@ class ApiAuthIntegrationTest {
 		jdbc.execute("delete from user_log");
 		jdbc.execute("delete from invitations");
 		jdbc.execute("delete from refresh_tokens");
+		jdbc.execute("delete from team_members");
+		jdbc.execute("delete from teams");
 		jdbc.execute("delete from users");
 		createUser(EMAIL, Role.MEMBER);
 	}

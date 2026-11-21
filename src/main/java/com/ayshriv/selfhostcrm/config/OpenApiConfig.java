@@ -61,6 +61,22 @@ public class OpenApiConfig {
 	public static final String EX_ACCEPTED_USER = "InvitationAccepted";
 
 	public static final String EX_INVALID_INVITATION = "InvalidInvitation";
+	/** Team and invitation lookup examples. */
+	public static final String EX_TEAM = "Team";
+
+	public static final String EX_TEAM_PAGE = "TeamPage";
+
+	public static final String EX_TEAM_MEMBER = "TeamMember";
+
+	public static final String EX_TEAM_MEMBER_PAGE = "TeamMemberPage";
+
+	public static final String EX_TEAM_DENIED = "AccessDeniedOnTeam";
+
+	public static final String EX_TEAM_NOT_FOUND = "TeamNotFound";
+
+	public static final String EX_TEAM_NAME_TAKEN = "TeamNameTaken";
+
+	public static final String EX_INVITATION = "Invitation";
 
 
 	@Bean
@@ -130,7 +146,10 @@ public class OpenApiConfig {
 								{"status":"success","message":"Audit log retrieved successfully",
 								 "data":[{"id":57,"createdOn":"2026-11-17T10:20:00Z","action":"USER_ROLE_CHANGED",
 								          "subAction":"SUCCESS","actorId":1,"actorName":"Root Admin",
-								          "targetType":"USER","targetId":7}],
+								          "targetType":"USER","targetId":7,"relatedUserId":null},
+								         {"id":58,"createdOn":"2026-11-17T10:21:00Z","action":"TEAM_MEMBER_ADDED",
+								          "subAction":"SUCCESS","actorId":1,"actorName":"Root Admin",
+								          "targetType":"TEAM","targetId":3,"relatedUserId":7}],
 								 "metadata":{"currentPage":0,"pageSize":20,"totalPages":1,"totalItems":1},
 								 "timestamp":"2026-11-17T10:20:05Z"}"""))
 						.addExamples(EX_INVITATION_CREATED, example("""
@@ -155,6 +174,44 @@ public class OpenApiConfig {
 								{"status":"error","message":"This invitation link is invalid or has expired",
 								 "errorCode":"E016","data":null,"path":"/api/invitations/accept",
 								 "timestamp":"2026-11-17T11:00:00Z"}"""))
+						.addExamples(EX_TEAM, example("""
+								{"status":"success","message":"Team retrieved successfully",
+								 "data":{"id":3,"name":"Sales","description":"Inside sales","createdOn":"2026-11-17T09:00:00Z",
+								         "memberCount":4},
+								 "timestamp":"2026-11-17T10:15:30Z"}"""))
+						.addExamples(EX_TEAM_PAGE, example("""
+								{"status":"success","message":"Teams retrieved successfully",
+								 "data":[{"id":3,"name":"Sales","description":"Inside sales",
+								          "createdOn":"2026-11-17T09:00:00Z","memberCount":4}],
+								 "metadata":{"currentPage":0,"pageSize":20,"totalPages":1,"totalItems":1},
+								 "timestamp":"2026-11-17T10:15:31Z"}"""))
+						.addExamples(EX_TEAM_MEMBER, example("""
+								{"status":"success","message":"Team member saved successfully",
+								 "data":{"userId":7,"displayName":"Sam Member","email":"sam@example.com",
+								         "accountRole":"MEMBER","teamRole":"LEAD","joinedOn":"2026-11-17T09:30:00Z"},
+								 "timestamp":"2026-11-17T10:15:30Z"}"""))
+						.addExamples(EX_TEAM_MEMBER_PAGE, example("""
+								{"status":"success","message":"Team members retrieved successfully",
+								 "data":[{"userId":7,"displayName":"Sam Member","email":"sam@example.com",
+								          "accountRole":"MEMBER","teamRole":"LEAD","joinedOn":"2026-11-17T09:30:00Z"}],
+								 "metadata":{"currentPage":0,"pageSize":20,"totalPages":1,"totalItems":1},
+								 "timestamp":"2026-11-17T10:15:31Z"}"""))
+						.addExamples(EX_TEAM_DENIED, example("""
+								{"status":"error","message":"You are not allowed to perform this action on this team",
+								 "errorCode":"E018","data":null,"path":"/api/teams/3/members/7",
+								 "timestamp":"2026-11-17T10:15:30Z"}"""))
+						.addExamples(EX_TEAM_NOT_FOUND, example("""
+								{"status":"error","message":"Team not found","errorCode":"E019","data":null,
+								 "path":"/api/teams/99","timestamp":"2026-11-17T10:15:30Z"}"""))
+						.addExamples(EX_TEAM_NAME_TAKEN, example("""
+								{"status":"error","message":"A team with this name already exists","errorCode":"E020",
+								 "data":null,"path":"/api/teams","timestamp":"2026-11-17T10:15:30Z"}"""))
+						.addExamples(EX_INVITATION, example("""
+								{"status":"success","message":"Invitation retrieved successfully",
+								 "data":{"id":12,"email":"new.hire@example.com","role":"MEMBER","invitedById":1,
+								         "invitedByName":"Root Admin","expiresAt":"2026-11-24T10:15:30Z",
+								         "createdOn":"2026-11-17T10:15:30Z"},
+								 "timestamp":"2026-11-17T10:15:31Z"}"""))
 						.addExamples(EX_INTERNAL, example("""
 								{"status":"error","message":"An unexpected error occurred","errorCode":"E500","data":null,
 								 "path":"/api/example","timestamp":"2026-11-17T10:15:30Z"}""")));

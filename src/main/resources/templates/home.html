@@ -2,14 +2,12 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Home')}"></head>
 <body th:attr="hx-headers=${'{&quot;' + _csrf.headerName + '&quot;:&quot;' + _csrf.token + '&quot;}'}">
+<nav th:replace="~{fragments/layout :: nav('home')}"></nav>
 <main class="card">
 	<h1>Welcome, <span th:text="${displayName}">User</span></h1>
 	<p>Signed in as <strong th:text="${role}">ADMIN</strong>.</p>
 	<p class="notice" th:if="${param.passwordChanged}">Your password was changed.</p>
 	<p><a th:href="@{/account/password}">Change password</a></p>
-	<form th:action="@{/logout}" method="post">
-		<button type="submit">Sign out</button>
-	</form>
 </main>
 </body>
 </html>

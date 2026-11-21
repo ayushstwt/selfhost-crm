@@ -25,6 +25,7 @@ Contents: [First-run setup](#first-run-setup) · [Web login and CSRF with HTMX](
 - A wrong password, an unknown email and a locked account all redirect to `/login?error` with the same message. A disabled account is only reported (`/login?disabled`) after the correct password.
 - Live sessions are re-checked on every request (`ActiveUserSessionFilter`): a disabled or deleted user is logged out immediately, and so is every session that authenticated **before** the last password change or the last access change (role, enabled or deleted state). The session that performs a password change stays logged in. A surviving session gets its authentication rebuilt from the database each request, so roles and permissions are never stale.
 - `/invite/{token}` is public (see [rbac.md](rbac.md)); the setup redirect does not apply to it.
+- The admin pages (`/admin/users`, `/admin/teams`, `/admin/audit`) are web-chain pages: session cookie, CSRF token on every POST (HTMX sends it from `<body hx-headers>`), authorization in the services. A 403 renders the friendly error page; see [rbac.md](rbac.md#admin-web-pages). The authentication rebuilt on every request also carries the current team memberships.
 
 ## API flow
 
@@ -43,7 +44,7 @@ User management, invitations and the admin audit log are documented in [rbac.md]
 
 Everything else under `/api/**` is **deny by default**: an endpoint that has no explicit rule in `ApiSecurityConfig` is reachable by ADMIN only (a test asserts MEMBER and MANAGER get 403 on an unlisted route).
 
-**Access tokens** are HS256 JWTs verified by Spring Security's OAuth2 resource server (Nimbus). Claims: `sub` = user id, `email`, `role`, `iat`, `exp`, `jti`. The token only *identifies*; on every request the user is loaded from the database (one query) and the principal (`UserPrincipal`: id, role, derived authorities) comes from that row, not from the token:
+**Access tokens** are HS256 JWTs verified by Spring Security's OAuth2 resource server (Nimbus). Claims: `sub` = user id, `email`, `role`, `iat`, `exp`, `jti`. The token only *identifies*; on every request the user is loaded from the database and the principal (`UserPrincipal`: id, role, derived authorities, and the user's team memberships with their team roles) comes from the database, not from the token. That costs two queries per request: the user row and one membership query (constant, whatever the number of teams):
 
 - a token of a disabled or deleted user is rejected at once;
 - authorities are `ROLE_<role>` plus one authority per permission of that role (`RolePermissions`), so a role edited in the database takes effect on the next request;
@@ -81,7 +82,7 @@ Everything else under `/api/**` is **deny by default**: an endpoint that has no 
 - A locked account returns the **same generic 401 `E006`** as a wrong password on the API (and the same redirect on the web). The lockout is logged server-side only. The password is always verified first, so response time is the same for every case.
 - A disabled user (`enabled = false`) cannot log in, cannot use access tokens (rejected per request) and cannot refresh.
 - Changing the password (web or API) needs the current password, revokes all refresh tokens, and ends the user's other web sessions.
-- Audit log (`user_log`): `LOGIN`, `LOGOUT`, `PASSWORD_CHANGED`, `REFRESH_REUSE_DETECTED`, `SETUP_COMPLETED`, plus the administrative actions `USER_UPDATED`, `USER_ROLE_CHANGED`, `USER_DISABLED`, `USER_ENABLED`, `USER_DELETED`, `INVITATION_CREATED`, `INVITATION_REVOKED`, `INVITATION_ACCEPTED`, each `SUCCESS` or `FAILURE`. Administrative entries carry the actor (`user_id`) and the target (`target_type` USER or INVITATION, `target_id`) and are written in the same transaction as the change; refused actions are not logged. The database has CHECK constraints for `action`, `sub_action` and `target_type` that mirror the Java enums (adding an action needs a migration; a test fails on drift). Failed logins for emails that do not exist are **not** written to the table; they go to the application log with a short hash fingerprint instead of the email. Passwords, tokens and request bodies are never logged.
+- Audit log (`user_log`): `LOGIN`, `LOGOUT`, `PASSWORD_CHANGED`, `REFRESH_REUSE_DETECTED`, `SETUP_COMPLETED`, plus the administrative actions `USER_UPDATED`, `USER_ROLE_CHANGED`, `USER_DISABLED`, `USER_ENABLED`, `USER_DELETED`, `INVITATION_CREATED`, `INVITATION_REVOKED`, `INVITATION_ACCEPTED`, and the team actions `TEAM_CREATED`, `TEAM_UPDATED`, `TEAM_DELETED`, `TEAM_MEMBER_ADDED`, `TEAM_MEMBER_REMOVED`, `TEAM_MEMBER_ROLE_CHANGED`, each `SUCCESS` or `FAILURE`. Administrative entries carry the actor (`user_id`) and the target (`target_type` USER, INVITATION or TEAM, `target_id`; team member actions also carry `related_user_id`, the affected user) and are written in the same transaction as the change; refused actions are not logged. The database has CHECK constraints for `action`, `sub_action` and `target_type` that mirror the Java enums (adding an action needs a migration; a test fails on drift). Failed logins for emails that do not exist are **not** written to the table; they go to the application log with a short hash fingerprint instead of the email. Passwords, tokens and request bodies are never logged.
 
 ## Error codes
 
@@ -106,6 +107,11 @@ The code is the `ErrorMessages` constant name; the HTTP status comes from the sa
 | `E015` | 403 | You cannot change the role, enabled state or existence of your own account |
 | `E016` | 400 | Invitation link invalid, expired, used or revoked (one code for all four) |
 | `E017` | 409 | A live invitation for this email was created by someone else (Manager only) |
+| `E018` | 403 | Not allowed on this team (not your team or not a lead; also an unknown team id for non-admins, so ids cannot be probed) |
+| `E019` | 404 | Team not found (Admin only) |
+| `E020` | 409 | A live team already has this name (ignoring case) |
+| `E021` | 404 | The user is not a member of the team |
+| `E022` | 409 | A disabled user cannot be added to a team |
 | `E400` | 400 | Bad request (unreadable JSON, missing parameter, type mismatch) |
 | `E405` | 405 | Method not allowed |
 | `E415` | 415 | Unsupported media type |
@@ -165,7 +171,7 @@ curl -si $B/api/auth/me
 
 - **Parallel refreshes revoke the token family.** Two simultaneous refresh requests with the same token are serialized by a row lock; the first wins and the second looks like a reuse, so the whole family is revoked and the client must sign in again. Clients should serialize their refresh calls (one in flight at a time).
 - Access tokens stay valid until they expire (15 minutes by default) after a password change; only refresh tokens and web sessions are cut off. Disabling, enabling, deleting a user and changing a role take effect immediately (see `access_changed_at` above).
-- **Soft-delete filters on append-only tables.** `User` carries `@SQLRestriction("is_deleted = false")`. `UserLog`, `RefreshToken` and `Invitation` deliberately do not: they are never soft-deleted (the log is append-only, refresh tokens are hard-deleted by the cleanup job, invitations end through `accepted_at` / `revoked_at`), so a filter would only hide rows. Consequence: their `user` references can point at a soft-deleted user. Code that touches such a reference must not load the lazy association: audit and invitation reads use DTO projections with a LEFT JOIN (name is `null` for a deleted user), invitations store plain ids, and the refresh lookup excludes tokens of deleted users.- Each API request costs one database lookup (this is what makes disabling immediate).
+- **Soft-delete filters on append-only tables.** `User` carries `@SQLRestriction("is_deleted = false")`. `UserLog`, `RefreshToken` and `Invitation` deliberately do not: they are never soft-deleted (the log is append-only, refresh tokens are hard-deleted by the cleanup job, invitations end through `accepted_at` / `revoked_at`), so a filter would only hide rows. Consequence: their `user` references can point at a soft-deleted user. Code that touches such a reference must not load the lazy association: audit and invitation reads use DTO projections with a LEFT JOIN (name is `null` for a deleted user), invitations store plain ids, and the refresh lookup excludes tokens of deleted users.- Each API request costs two database queries: the user row and the team memberships (this is what makes disabling and team changes immediate).
 - No per-IP rate limiting in the application (see operations notes).
 - No self-service registration, password reset by email, MFA or SSO yet.
 - `E009` is defined but unused on purpose.

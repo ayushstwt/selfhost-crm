@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Teams')}"></head>
+<body th:attr="hx-headers=${'{&quot;' + _csrf.headerName + '&quot;:&quot;' + _csrf.token + '&quot;}'}">
+<nav th:replace="~{fragments/layout :: nav('teams')}"></nav>
+<main class="page">
+	<h1>Teams</h1>
+	<div id="flash" aria-live="polite"></div>
+
+	<section class="panel" th:if="${canCreate}">
+		<h2>New team</h2>
+		<div id="create-team">
+			<form th:fragment="createForm" th:action="@{/admin/teams}" method="post" class="stack"
+			      th:hx-post="@{/admin/teams}" hx-target="#create-team" hx-swap="innerHTML">
+				<label for="team-name">Name</label>
+				<input id="team-name" name="name" type="text" maxlength="100" th:value="${form.name}" required>
+				<p class="error" th:if="${errors['name']}" th:text="${errors['name']}"></p>
+				<label for="team-description">Description (optional)</label>
+				<input id="team-description" name="description" type="text" maxlength="500" th:value="${form.description}">
+				<p class="error" th:if="${errors['description']}" th:text="${errors['description']}"></p>
+				<button type="submit" class="btn">Create team</button>
+			</form>
+		</div>
+	</section>
+
+	<section class="panel">
+		<form th:action="@{/admin/teams}" method="get" class="filters" th:hx-get="@{/admin/teams}"
+		      hx-target="#teams-table" hx-swap="innerHTML" hx-trigger="submit, keyup changed delay:300ms from:#team-q">
+			<input id="team-q" name="q" type="search" placeholder="Search teams" th:value="${q}">
+			<button type="submit" class="btn-sm">Search</button>
+		</form>
+		<div id="teams-table">
+			<div th:fragment="table">
+				<table>
+					<thead><tr><th>Name</th><th>Description</th><th>Members</th></tr></thead>
+					<tbody>
+					<tr th:each="t : ${teams}">
+						<td><a th:href="@{/admin/teams/{id}(id=${t.id})}" th:text="${t.name}">Sales</a></td>
+						<td th:text="${t.description}">Inside sales</td>
+						<td th:text="${t.memberCount}">3</td>
+					</tr>
+					<tr th:if="${#lists.isEmpty(teams)}"><td colspan="3" class="muted">No teams to show.</td></tr>
+					</tbody>
+				</table>
+				<p class="pager" th:if="${page.totalPages > 1}">
+					<a th:if="${page.hasPrevious()}" th:href="@{/admin/teams(q=${q},page=${page.number - 1})}"
+					   th:hx-get="@{/admin/teams(q=${q},page=${page.number - 1})}" hx-target="#teams-table" hx-swap="innerHTML">Previous</a>
+					<span th:text="${'Page ' + (page.number + 1) + ' of ' + page.totalPages}">Page 1 of 1</span>
+					<a th:if="${page.hasNext()}" th:href="@{/admin/teams(q=${q},page=${page.number + 1})}"
+					   th:hx-get="@{/admin/teams(q=${q},page=${page.number + 1})}" hx-target="#teams-table" hx-swap="innerHTML">Next</a>
+				</p>
+			</div>
+		</div>
+	</section>
+</main>
+</body>
+</html>
